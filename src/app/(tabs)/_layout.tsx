@@ -1,32 +1,24 @@
-import { Tabs } from "expo-router";
-import { View } from "react-native";
-import {
-  LayoutGrid,
-  UtensilsCrossed,
-  Heart,
-} from "lucide-react-native";
+import { Tabs } from 'expo-router';
+import { View } from 'react-native';
+import { ChartColumnBig, House, Salad, Soup } from 'lucide-react-native';
 
 function TabIcon({
-  Icon,
   focused,
+  label,
+  Icon,
 }: {
-  Icon: typeof LayoutGrid;
   focused: boolean;
+  label: string;
+  Icon: typeof House;
 }) {
+  const color = focused ? '#F5F7F2' : '#70806E';
+
   return (
-    <View
-      className={`items-center justify-center ${
-        focused ? "opacity-100" : "opacity-40"
-      }`}
-    >
-      <Icon
-        size={20}
-        color="#0C0A09"
-        strokeWidth={focused ? 2.2 : 1.6}
-      />
-      {focused && (
-        <View className="mt-1 h-[2px] w-4 rounded-full bg-primary" />
-      )}
+    <View className="items-center gap-1">
+      <View className={`rounded-full px-3 py-2 ${focused ? 'bg-forest-panelAlt' : 'bg-transparent'}`}>
+        <Icon size={20} color={color} strokeWidth={focused ? 2.2 : 1.8} accessibilityLabel={label} />
+      </View>
+      <View className={`h-1 w-6 rounded-full ${focused ? 'bg-forest-line' : 'bg-transparent'}`} />
     </View>
   );
 }
@@ -36,56 +28,65 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: true,
-        tabBarActiveTintColor: "#0C0A09",
-        tabBarInactiveTintColor: "#A8A29E",
+        animation: 'fade',
+        tabBarHideOnKeyboard: true,
+        tabBarActiveTintColor: '#F5F7F2',
+        tabBarInactiveTintColor: '#70806E',
         tabBarLabelStyle: {
-          fontFamily: "DMSans_500Medium",
-          fontSize: 10,
-          letterSpacing: 1.2,
-          textTransform: "uppercase",
-          marginTop: -2,
+          fontFamily: 'DMSans_500Medium',
+          fontSize: 11,
+          marginBottom: 2,
         },
+        tabBarAllowFontScaling: true,
         tabBarStyle: {
-          backgroundColor: "#FFFFFF",
+          backgroundColor: '#0B160C',
+          borderTopColor: '#243723',
           borderTopWidth: 1,
-          borderTopColor: "#E7E5E4",
-          height: 72,
-          paddingTop: 8,
-          paddingBottom: 12,
-          elevation: 0,
-          shadowOpacity: 0,
+          height: 82,
+          paddingTop: 10,
+          paddingBottom: 10,
+        },
+        tabBarItemStyle: {
+          borderRadius: 20,
+          marginHorizontal: 2,
+          marginVertical: 4,
+          paddingTop: 2,
+        },
+        sceneStyle: {
+          backgroundColor: '#07110A',
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "LOG",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon Icon={LayoutGrid} focused={focused} />
-          ),
-          tabBarAccessibilityLabel: "Daily Log",
+          title: 'Inicio',
+          tabBarAccessibilityLabel: 'Pestaña de inicio',
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Inicio" Icon={House} />,
+        }}
+      />
+      <Tabs.Screen
+        name="timeline"
+        options={{
+          title: 'Historial',
+          tabBarAccessibilityLabel: 'Pestaña de historial',
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Historial" Icon={ChartColumnBig} />,
         }}
       />
       <Tabs.Screen
         name="foods"
         options={{
-          title: "FOODS",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon Icon={UtensilsCrossed} focused={focused} />
-          ),
-          tabBarAccessibilityLabel: "Food Catalog",
+          title: 'Alimentos',
+          tabBarAccessibilityLabel: 'Pestaña de alimentos',
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Alimentos" Icon={Salad} />,
         }}
       />
       <Tabs.Screen
         name="favorites"
         options={{
-          title: "DISHES",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon Icon={Heart} focused={focused} />
-          ),
-          tabBarAccessibilityLabel: "Favorite Dishes",
+          title: 'Platos',
+          tabBarAccessibilityLabel: 'Pestaña de platos',
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} label="Platos" Icon={Soup} />,
         }}
       />
     </Tabs>

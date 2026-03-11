@@ -38,6 +38,23 @@ export type MealLogEntry = {
   notes?: string;
 };
 
+export type DailyNutritionLog = {
+  id: string;
+  userId: string;
+  date: string;
+  calorieTarget: number;
+  mealCount: number;
+  total: MacroNutrients;
+  meals: MealLogEntry[];
+};
+
+export type WeightEntry = {
+  id: string;
+  userId: string;
+  date: string;
+  weightKg: number;
+};
+
 export type NutritionLabelScanResult = {
   detectedName: string;
   servingSize: number;

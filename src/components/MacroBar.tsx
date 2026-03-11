@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { cn } from '@/lib/utils';
 import type { MacroNutrients } from '@/types/nutrition';
 
@@ -15,7 +15,11 @@ export function MacroBar({ macros, className }: MacroBarProps) {
 
   if (total === 0) {
     return (
-      <View className={cn('h-2 w-full rounded-full bg-border', className)} />
+      <View
+        className={cn('h-3 w-full rounded-full bg-forest-line', className)}
+        accessibilityRole="text"
+        accessibilityLabel="No hay datos de macros"
+      />
     );
   }
 
@@ -27,37 +31,28 @@ export function MacroBar({ macros, className }: MacroBarProps) {
     <View
       className={cn(className)}
       accessibilityRole="text"
-      accessibilityLabel={`Macro ratio: ${proteinPct}% protein, ${carbsPct}% carbs, ${fatsPct}% fat`}
+      accessibilityLabel={`Reparto de macros: ${proteinPct}% proteina, ${carbsPct}% carbohidratos, ${fatsPct}% grasa`}
     >
-      <View className="h-2 w-full flex-row overflow-hidden rounded-full">
+      <View className="h-3 w-full flex-row overflow-hidden rounded-full bg-black/20">
         {proteinPct > 0 && (
-          <View
-            className="h-full bg-accent-blue"
-            style={{ width: `${proteinPct}%` }}
-          />
+          <View className="h-full bg-protein" style={{ width: `${proteinPct}%` }} />
         )}
         {carbsPct > 0 && (
-          <View
-            className="h-full bg-accent-amber"
-            style={{ width: `${carbsPct}%` }}
-          />
+          <View className="h-full bg-carbs" style={{ width: `${carbsPct}%` }} />
         )}
         {fatsPct > 0 && (
-          <View
-            className="h-full bg-accent-red"
-            style={{ width: `${fatsPct}%` }}
-          />
+          <View className="h-full bg-fat" style={{ width: `${fatsPct}%` }} />
         )}
       </View>
-      <View className="mt-1.5 flex-row justify-between">
-        <Text className="font-mono text-[9px] tabular-nums text-accent-blue">
-          P {proteinPct}%
+      <View className="mt-3 flex-row justify-between">
+        <Text className="font-sans text-[11px] uppercase tracking-[1px] text-protein">
+          Prote {proteinPct}%
         </Text>
-        <Text className="font-mono text-[9px] tabular-nums text-accent-amber">
-          C {carbsPct}%
+        <Text className="font-sans text-[11px] uppercase tracking-[1px] text-carbs">
+          Hidr. {carbsPct}%
         </Text>
-        <Text className="font-mono text-[9px] tabular-nums text-accent-red">
-          F {fatsPct}%
+        <Text className="font-sans text-[11px] uppercase tracking-[1px] text-fat">
+          Grasas {fatsPct}%
         </Text>
       </View>
     </View>

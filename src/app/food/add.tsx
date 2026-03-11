@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Text as UIText } from '@/components/ui/text';
 import { Separator } from '@/components/ui/separator';
 import { NutritionGrid } from '@/components/NutritionGrid';
+import { ScreenTransition } from '@/components/ScreenTransition';
 import { calculatePerServing } from '@/utils/calculatePerServing';
 import type { MacroNutrients } from '@/types/nutrition';
 
@@ -17,7 +18,7 @@ type ServingUnit = 'g' | 'ml' | 'unit';
 const UNITS: { value: ServingUnit; label: string }[] = [
   { value: 'g', label: 'g' },
   { value: 'ml', label: 'ml' },
-  { value: 'unit', label: 'unit' },
+  { value: 'unit', label: 'ud' },
 ];
 
 export default function AddFoodScreen() {
@@ -46,32 +47,27 @@ export default function AddFoodScreen() {
     [per100g, servingSize]
   );
 
-  const canSave =
-    name.trim().length > 0 &&
-    Number(calories) > 0 &&
-    Number(servingSize) > 0;
+  const canSave = name.trim().length > 0 && Number(calories) > 0 && Number(servingSize) > 0;
 
   function handleSave() {
-    // TODO: persist to DynamoDB via API
-    Alert.alert('Food Saved', `${name} has been added to your catalog.`, [
-      { text: 'OK', onPress: () => router.back() },
+    Alert.alert('Alimento guardado', `${name} se ha anadido a tu catalogo.`, [
+      { text: 'Vale', onPress: () => router.back() },
     ]);
   }
 
   return (
     <SafeAreaView className="flex-1 bg-canvas" edges={['top']}>
-      {/* Header */}
       <View className="flex-row items-center border-b border-border bg-surface px-4 py-3">
         <Pressable
           onPress={() => router.back()}
           className="mr-3 h-9 w-9 items-center justify-center rounded-sm active:bg-canvas"
           accessibilityRole="button"
-          accessibilityLabel="Go Back"
+          accessibilityLabel="Volver atras"
         >
           <ArrowLeft size={18} color="#0C0A09" strokeWidth={1.6} />
         </Pressable>
         <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-          ADD FOOD
+          ANADIR ALIMENTO
         </Text>
       </View>
 
@@ -81,24 +77,22 @@ export default function AddFoodScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Name field */}
-        <View className="px-5 pt-5">
-          <Label nativeID="food-name">Food Name</Label>
+        <ScreenTransition variant="right" className="px-5 pt-5">
+          <Label nativeID="food-name">Nombre del alimento</Label>
           <Input
             value={name}
             onChangeText={setName}
-            placeholder="e.g. Chicken Breast"
+            placeholder="Ej. pechuga de pollo"
             className="mt-1.5"
             autoFocus
             accessibilityLabelledBy="food-name"
-            accessibilityLabel="Food name"
+            accessibilityLabel="Nombre del alimento"
           />
-        </View>
+        </ScreenTransition>
 
-        {/* Serving size + unit */}
-        <View className="mt-4 flex-row gap-3 px-5">
+        <ScreenTransition variant="right" delay={40} className="mt-4 flex-row gap-3 px-5">
           <View className="flex-1">
-            <Label nativeID="serving-size">Default Serving</Label>
+            <Label nativeID="serving-size">Racion por defecto</Label>
             <Input
               value={servingSize}
               onChangeText={setServingSize}
@@ -106,126 +100,111 @@ export default function AddFoodScreen() {
               className="mt-1.5"
               inputMode="decimal"
               accessibilityLabelledBy="serving-size"
-              accessibilityLabel="Default serving size"
+              accessibilityLabel="Tamano de la racion por defecto"
             />
           </View>
           <View className="w-24">
-            <Label nativeID="serving-unit">Unit</Label>
+            <Label nativeID="serving-unit">Unidad</Label>
             <View className="mt-1.5 flex-row">
               {UNITS.map((u) => (
                 <Pressable
                   key={u.value}
                   onPress={() => setServingUnit(u.value)}
                   className={`flex-1 items-center border py-2.5 ${
-                    servingUnit === u.value
-                      ? 'border-primary bg-primary'
-                      : 'border-border bg-surface'
-                  } ${u.value === 'g' ? 'rounded-l-sm' : ''} ${
-                    u.value === 'unit' ? 'rounded-r-sm' : ''
-                  }`}
+                    servingUnit === u.value ? 'border-brand bg-brand' : 'border-border bg-surface'
+                  } ${u.value === 'g' ? 'rounded-l-sm' : ''} ${u.value === 'unit' ? 'rounded-r-sm' : ''}`}
                   accessibilityRole="button"
-                  accessibilityLabel={`Unit: ${u.label}`}
+                  accessibilityLabel={`Unidad: ${u.label}`}
                   accessibilityState={{ selected: servingUnit === u.value }}
                 >
-                  <Text
-                    className={`font-mono text-xs ${
-                      servingUnit === u.value ? 'text-surface' : 'text-secondary'
-                    }`}
-                  >
+                  <Text className={`font-mono text-xs ${servingUnit === u.value ? 'text-white' : 'text-secondary'}`}>
                     {u.label}
                   </Text>
                 </Pressable>
               ))}
             </View>
           </View>
-        </View>
+        </ScreenTransition>
 
         <Separator className="mx-5 my-5" />
 
-        {/* Macros per 100g */}
-        <View className="px-5">
+        <ScreenTransition variant="right" delay={80} className="px-5">
           <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-            MACROS PER 100{servingUnit}
+            MACROS POR 100{servingUnit}
           </Text>
 
           <View className="mt-3 flex-row gap-3">
             <View className="flex-1">
-              <Label nativeID="macro-cal">Calories</Label>
+              <Label nativeID="macro-cal">Calorias</Label>
               <Input
                 value={calories}
                 onChangeText={setCalories}
                 placeholder="0"
-                className="mt-1.5 border-accent-green/30"
+                className="mt-1.5 border-brand/30"
                 inputMode="decimal"
                 accessibilityLabelledBy="macro-cal"
-                accessibilityLabel="Calories per 100 grams"
+                accessibilityLabel="Calorias por 100 gramos"
               />
             </View>
             <View className="flex-1">
-              <Label nativeID="macro-pro">Protein</Label>
+              <Label nativeID="macro-pro">Proteina</Label>
               <Input
                 value={protein}
                 onChangeText={setProtein}
                 placeholder="0"
-                className="mt-1.5 border-accent-blue/30"
+                className="mt-1.5 border-protein/30"
                 inputMode="decimal"
                 accessibilityLabelledBy="macro-pro"
-                accessibilityLabel="Protein per 100 grams"
+                accessibilityLabel="Proteina por 100 gramos"
               />
             </View>
           </View>
 
           <View className="mt-3 flex-row gap-3">
             <View className="flex-1">
-              <Label nativeID="macro-carb">Carbs</Label>
+              <Label nativeID="macro-carb">Carbohidratos</Label>
               <Input
                 value={carbs}
                 onChangeText={setCarbs}
                 placeholder="0"
-                className="mt-1.5 border-accent-amber/30"
+                className="mt-1.5 border-carbs/30"
                 inputMode="decimal"
                 accessibilityLabelledBy="macro-carb"
-                accessibilityLabel="Carbs per 100 grams"
+                accessibilityLabel="Carbohidratos por 100 gramos"
               />
             </View>
             <View className="flex-1">
-              <Label nativeID="macro-fat">Fats</Label>
+              <Label nativeID="macro-fat">Grasas</Label>
               <Input
                 value={fats}
                 onChangeText={setFats}
                 placeholder="0"
-                className="mt-1.5 border-accent-red/30"
+                className="mt-1.5 border-fat/30"
                 inputMode="decimal"
                 accessibilityLabelledBy="macro-fat"
-                accessibilityLabel="Fats per 100 grams"
+                accessibilityLabel="Grasas por 100 gramos"
               />
             </View>
           </View>
-        </View>
+        </ScreenTransition>
 
-        {/* Live preview */}
         {canSave && (
           <>
             <Separator className="mx-5 my-5" />
-            <View className="px-5">
+            <ScreenTransition variant="right" delay={120} className="px-5">
               <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-                PREVIEW — {servingSize}
-                {servingUnit} SERVING
+                VISTA PREVIA - RACION DE {servingSize}
+                {servingUnit}
               </Text>
               <NutritionGrid macros={preview} size="sm" className="mt-3" />
-            </View>
+            </ScreenTransition>
           </>
         )}
       </ScrollView>
 
-      {/* Save button */}
       <View className="border-t border-border bg-surface px-5 py-4">
-        <Button
-          onPress={handleSave}
-          disabled={!canSave}
-          accessibilityLabel="Save Food"
-        >
-          <UIText>Save Food</UIText>
+        <Button onPress={handleSave} disabled={!canSave} accessibilityLabel="Guardar alimento">
+          <UIText>Guardar alimento</UIText>
         </Button>
       </View>
     </SafeAreaView>

@@ -5,7 +5,7 @@ import { Platform, Pressable } from "react-native";
 
 const buttonVariants = cva(
   cn(
-    "group shrink-0 flex-row items-center justify-center gap-2 rounded-sm",
+    "group shrink-0 flex-row items-center justify-center gap-2 rounded-2xl",
     Platform.select({
       web: "focus-visible:border-ring focus-visible:ring-ring/50 whitespace-nowrap outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none",
     })
@@ -14,24 +14,24 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: cn(
-          "bg-primary active:bg-primary/90",
-          Platform.select({ web: "hover:bg-primary/90" })
+          "bg-brand active:bg-brand/90",
+          Platform.select({ web: "hover:bg-brand/90" })
         ),
         destructive: cn(
           "bg-accent-red active:bg-accent-red/90",
           Platform.select({ web: "hover:bg-accent-red/90" })
         ),
         outline: cn(
-          "border-border bg-surface active:bg-canvas border",
-          Platform.select({ web: "hover:bg-canvas" })
+          "border-border bg-surface/90 active:bg-forest-panel border",
+          Platform.select({ web: "hover:bg-forest-panel" })
         ),
         secondary: cn(
-          "bg-canvas active:bg-border",
-          Platform.select({ web: "hover:bg-border" })
+          "bg-forest-panelAlt active:bg-forest-line",
+          Platform.select({ web: "hover:bg-forest-line" })
         ),
         ghost: cn(
-          "active:bg-canvas",
-          Platform.select({ web: "hover:bg-canvas" })
+          "active:bg-forest-panel",
+          Platform.select({ web: "hover:bg-forest-panel" })
         ),
         link: "",
       },
@@ -57,13 +57,13 @@ const buttonTextVariants = cva(
   {
     variants: {
       variant: {
-        default: "text-surface",
-        destructive: "text-surface",
+        default: "text-white",
+        destructive: "text-white",
         outline: "text-primary",
         secondary: "text-primary",
         ghost: "text-primary",
         link: cn(
-          "text-primary group-active:underline",
+          "text-brand group-active:underline",
           Platform.select({
             web: "underline-offset-4 hover:underline group-hover:underline",
           })
@@ -98,7 +98,8 @@ function Button({ className, variant, size, ...props }: ButtonProps) {
           buttonVariants({ variant, size }),
           className
         )}
-        role="button"
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !!props.disabled }}
         {...props}
       />
     </TextClassContext.Provider>

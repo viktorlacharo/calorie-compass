@@ -16,53 +16,47 @@ export default function ScanLabelScreen() {
 
   function handleCapture() {
     setState('scanning');
-    // Simulate AI processing delay
     setTimeout(() => setState('result'), 1500);
   }
 
   function handleConfirm() {
-    // TODO: save scanned food to DynamoDB
     router.back();
   }
 
   return (
     <SafeAreaView className="flex-1 bg-canvas" edges={['top']}>
-      {/* Header */}
       <View className="flex-row items-center border-b border-border bg-surface px-4 py-3">
         <Pressable
           onPress={() => router.back()}
           className="mr-3 h-9 w-9 items-center justify-center rounded-sm active:bg-canvas"
           accessibilityRole="button"
-          accessibilityLabel="Go Back"
+          accessibilityLabel="Volver atras"
         >
           <ArrowLeft size={18} color="#0C0A09" strokeWidth={1.6} />
         </Pressable>
         <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-          SCAN NUTRITION LABEL
+          ESCANEAR ETIQUETA
         </Text>
       </View>
 
       <View className="flex-1 px-5">
-        {/* Camera placeholder */}
         <View className="mt-5 aspect-[4/3] w-full items-center justify-center border border-dashed border-border bg-surface">
           {state === 'idle' && (
             <View className="items-center">
               <Camera size={32} color="#A8A29E" strokeWidth={1.2} />
               <Text className="mt-3 font-sans text-[10px] tracking-widest uppercase text-muted">
-                CAMERA PREVIEW
+                PREVIA DE CAMARA
               </Text>
               <Text className="mt-1 font-sans text-xs text-secondary">
-                Point at a nutrition label
+                Apunta a una etiqueta nutricional
               </Text>
             </View>
           )}
           {state === 'scanning' && (
             <View className="items-center">
-              <Text className="font-mono-medium text-sm text-primary">
-                Analyzing{'\u2026'}
-              </Text>
+              <Text className="font-mono-medium text-sm text-primary">Analizando...</Text>
               <Text className="mt-1 font-sans text-xs text-secondary">
-                Extracting nutrition data
+                Extrayendo datos nutricionales
               </Text>
             </View>
           )}
@@ -70,45 +64,36 @@ export default function ScanLabelScreen() {
             <View className="items-center">
               <Check size={24} color="#16A34A" strokeWidth={2} />
               <Text className="mt-2 font-sans text-xs text-accent-green">
-                Label detected
+                Etiqueta detectada
               </Text>
             </View>
           )}
         </View>
 
-        {/* Capture button (when idle) */}
         {state === 'idle' && (
-          <Button
-            onPress={handleCapture}
-            className="mt-5"
-            accessibilityLabel="Capture Label"
-          >
-            <UIText>Capture Label</UIText>
+          <Button onPress={handleCapture} className="mt-5" accessibilityLabel="Hacer foto de la etiqueta">
+            <UIText>Hacer foto</UIText>
           </Button>
         )}
 
-        {/* Scan result */}
         {state === 'result' && (
           <View className="mt-5">
-            <ScanResultCard
-              result={mockNutritionLabelScan}
-              variant="label"
-            />
+            <ScanResultCard result={mockNutritionLabelScan} variant="label" />
             <View className="mt-4 flex-row gap-3">
               <Button
                 variant="outline"
                 className="flex-1"
                 onPress={() => setState('idle')}
-                accessibilityLabel="Retake Photo"
+                accessibilityLabel="Repetir foto"
               >
-                <UIText>Retake</UIText>
+                <UIText>Repetir</UIText>
               </Button>
               <Button
                 className="flex-1"
                 onPress={handleConfirm}
-                accessibilityLabel="Save Scanned Food"
+                accessibilityLabel="Guardar alimento escaneado"
               >
-                <UIText>Save Food</UIText>
+                <UIText>Guardar alimento</UIText>
               </Button>
             </View>
           </View>

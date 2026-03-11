@@ -1,82 +1,64 @@
-import { View, Text, FlatList, Pressable } from 'react-native';
+import { FlatList, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Plus } from 'lucide-react-native';
 import { FavoriteDishCard } from '@/components/FavoriteDishCard';
+import { GlassPanel } from '@/components/GlassPanel';
+import { ScreenTransition } from '@/components/ScreenTransition';
 import { mockFavoriteDishes, mockFoods } from '@/mocks/nutrition';
 import { calculatePerServing } from '@/utils/calculatePerServing';
 import { sumMacros } from '@/utils/sumMacros';
 import type { MacroNutrients } from '@/types/nutrition';
 
-/** Resolve a dish's total calories from the food catalog */
-function getDishCalories(
-  dishItems: { foodId: string; quantity: number; unit: string }[]
-): number {
+function getDishTotals(dishItems: { foodId: string; quantity: number; unit: string }[]) {
   const macrosList: MacroNutrients[] = [];
+
   for (const item of dishItems) {
-    const food = mockFoods.find((f) => f.id === item.foodId);
+    const food = mockFoods.find((entry) => entry.id === item.foodId);
     if (food) {
       macrosList.push(calculatePerServing(food.per100g, item.quantity));
     }
   }
-  return sumMacros(macrosList).calories;
+
+  return sumMacros(macrosList);
 }
 
 export default function FavoritesScreen() {
-  const router = useRouter();
-
   return (
     <SafeAreaView className="flex-1 bg-canvas" edges={['top']}>
-      {/* Header */}
-      <View className="border-b border-border bg-surface px-5 pb-3 pt-2">
-        <View className="flex-row items-center justify-between">
-          <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-            FAVORITE DISHES
-          </Text>
-          <Text className="font-mono text-[10px] tabular-nums text-muted">
-            {mockFavoriteDishes.length}{' '}
-            {mockFavoriteDishes.length === 1 ? 'dish' : 'dishes'}
-          </Text>
-        </View>
-      </View>
-
       <FlatList
         data={mockFavoriteDishes}
         keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={{ gap: 1 }}
-        contentContainerStyle={{ flexGrow: 1, gap: 1 }}
-        renderItem={({ item }) => (
-          <View className="flex-1">
-            <FavoriteDishCard
-              dish={item}
-              totalCalories={getDishCalories(item.items)}
-              onPress={() => router.push(`/favorite/${item.id}`)}
-            />
-          </View>
-        )}
-        ListEmptyComponent={
-          <View className="flex-1 items-center justify-center px-5 py-16">
-            <Text className="font-sans-medium text-sm text-secondary">
-              No favorite dishes yet
+        contentContainerStyle={{ paddingBottom: 36 }}
+        ListHeaderComponent={
+          <ScreenTransition className="px-5 pb-6 pt-2">
+            <Text className="font-sans text-sm text-secondary">Registro preciso a un toque</Text>
+            <Text className="mt-1 font-sans-bold text-[31px] leading-[34px] text-primary">
+              Platos favoritos
             </Text>
-            <Text className="mt-1 text-center font-sans text-xs text-muted">
-              Create combinations of foods you eat often for one-tap logging
-            </Text>
-          </View>
+
+            <GlassPanel className="mt-6 px-4 py-4">
+              <View className="flex-row items-center justify-between gap-3">
+                <View>
+                  <Text className="font-sans text-[11px] uppercase tracking-[2px] text-secondary">
+                    Combinaciones guardadas
+                  </Text>
+                  <Text className="mt-2 font-sans-bold text-[30px] text-primary">
+                    {mockFavoriteDishes.length}
+                  </Text>
+                </View>
+                <Text className="max-w-[170px] text-right font-sans text-sm leading-5 text-secondary">
+                  Monta tus platos repetidos y registralos con macros consistentes en un toque.
+                </Text>
+              </View>
+            </GlassPanel>
+          </ScreenTransition>
         }
+        renderItem={({ item, index }) => (
+          <ScreenTransition delay={40} className={`mx-5 ${index === 0 ? '' : 'mt-3'}`}>
+            <FavoriteDishCard dish={item} totals={getDishTotals(item.items)} />
+          </ScreenTransition>
+        )}
         showsVerticalScrollIndicator={false}
       />
-
-      {/* FAB */}
-      <Pressable
-        onPress={() => router.push('/favorite/create')}
-        className="absolute bottom-6 right-5 h-12 w-12 items-center justify-center rounded-sm bg-primary active:bg-primary/90"
-        accessibilityRole="button"
-        accessibilityLabel="Create Favorite Dish"
-      >
-        <Plus size={20} color="#FFFFFF" strokeWidth={2} />
-      </Pressable>
     </SafeAreaView>
   );
 }

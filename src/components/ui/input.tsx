@@ -8,7 +8,7 @@ function Input({
   return (
     <TextInput
       className={cn(
-        "border-border bg-surface text-primary flex h-11 w-full min-w-0 flex-row items-center rounded-sm border px-3 py-1 font-sans text-base leading-5",
+        "border-border bg-surface/90 text-primary flex h-12 w-full min-w-0 flex-row items-center rounded-2xl border px-4 py-1 font-sans text-base leading-5",
         props.editable === false &&
           cn(
             "opacity-50",
@@ -19,7 +19,7 @@ function Input({
         Platform.select({
           web: cn(
             "placeholder:text-muted outline-none transition-[color,box-shadow]",
-            "focus-visible:border-primary focus-visible:ring-primary/10 focus-visible:ring-[3px]"
+            "focus-visible:border-brand focus-visible:ring-brand/20 focus-visible:ring-[3px]"
           ),
           native: "placeholder:text-muted",
         }),

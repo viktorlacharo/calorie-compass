@@ -1,21 +1,16 @@
-import { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  FlatList,
-  Alert,
-} from 'react-native';
+import { useMemo, useState } from 'react';
+import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Plus, Minus, Check } from 'lucide-react-native';
+import { ArrowLeft, Plus, Minus } from 'lucide-react-native';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Text as UIText } from '@/components/ui/text';
 import { Separator } from '@/components/ui/separator';
 import { NutritionGrid } from '@/components/NutritionGrid';
+import { GlassPanel } from '@/components/GlassPanel';
+import { ScreenTransition } from '@/components/ScreenTransition';
 import { calculatePerServing } from '@/utils/calculatePerServing';
 import { sumMacros } from '@/utils/sumMacros';
 import { mockFoods } from '@/mocks/nutrition';
@@ -33,9 +28,7 @@ export default function CreateFavoriteScreen() {
   const [showFoodPicker, setShowFoodPicker] = useState(false);
 
   const totalMacros: MacroNutrients = useMemo(() => {
-    const macrosList = items.map((item) =>
-      calculatePerServing(item.food.per100g, item.quantity)
-    );
+    const macrosList = items.map((item) => calculatePerServing(item.food.per100g, item.quantity));
     return sumMacros(macrosList);
   }, [items]);
 
@@ -51,193 +44,154 @@ export default function CreateFavoriteScreen() {
   }
 
   function updateQuantity(index: number, qty: string) {
-    setItems((prev) =>
-      prev.map((item, i) =>
-        i === index ? { ...item, quantity: Number(qty) || 0 } : item
-      )
-    );
+    setItems((prev) => prev.map((item, i) => (i === index ? { ...item, quantity: Number(qty) || 0 } : item)));
   }
 
   function handleSave() {
-    // TODO: persist to DynamoDB
-    Alert.alert(
-      'Dish Created',
-      `"${name}" has been saved with ${items.length} items.`,
-      [{ text: 'OK', onPress: () => router.back() }]
-    );
+    Alert.alert('Plato creado', `"${name}" se ha guardado con ${items.length} ingredientes.`, [
+      { text: 'Vale', onPress: () => router.back() },
+    ]);
   }
 
-  // Available foods not yet added
-  const availableFoods = mockFoods.filter(
-    (f) => !items.some((i) => i.food.id === f.id)
-  );
+  const availableFoods = mockFoods.filter((f) => !items.some((i) => i.food.id === f.id));
 
   return (
     <SafeAreaView className="flex-1 bg-canvas" edges={['top']}>
-      {/* Header */}
       <View className="flex-row items-center border-b border-border bg-surface px-4 py-3">
         <Pressable
           onPress={() => router.back()}
           className="mr-3 h-9 w-9 items-center justify-center rounded-sm active:bg-canvas"
           accessibilityRole="button"
-          accessibilityLabel="Go Back"
+          accessibilityLabel="Volver atras"
         >
           <ArrowLeft size={18} color="#0C0A09" strokeWidth={1.6} />
         </Pressable>
         <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-          CREATE FAVORITE DISH
+          CREAR PLATO FAVORITO
         </Text>
       </View>
 
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Dish name */}
-        <View className="px-5 pt-5">
-          <Label nativeID="dish-name">Dish Name</Label>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScreenTransition variant="right" className="px-5 pt-5">
+          <Label nativeID="dish-name">Nombre del plato</Label>
           <Input
             value={name}
             onChangeText={setName}
-            placeholder="e.g. Lunch Bowl"
+            placeholder="Ej. bowl de comida"
             className="mt-1.5"
             autoFocus
             accessibilityLabelledBy="dish-name"
-            accessibilityLabel="Dish name"
+            accessibilityLabel="Nombre del plato"
           />
-        </View>
+        </ScreenTransition>
 
         <Separator className="mx-5 my-4" />
 
-        {/* Items list */}
-        <View className="px-5">
+        <ScreenTransition variant="right" delay={40} className="px-5">
           <View className="flex-row items-center justify-between">
             <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-              INGREDIENTS
+              INGREDIENTES
             </Text>
             <Text className="font-mono text-[10px] tabular-nums text-muted">
-              {items.length} {items.length === 1 ? 'item' : 'items'}
+              {items.length} {items.length === 1 ? 'ingrediente' : 'ingredientes'}
             </Text>
           </View>
 
           {items.map((item, index) => (
-            <View
-              key={item.food.id}
-              className="mt-3 flex-row items-center border border-border bg-surface p-3"
-            >
-              <View className="flex-1">
-                <Text
-                  className="font-sans-medium text-xs text-primary"
-                  numberOfLines={1}
-                >
-                  {item.food.name}
-                </Text>
-                <View className="mt-1.5 flex-row items-center gap-2">
-                  <Input
-                    value={String(item.quantity)}
-                    onChangeText={(v) => updateQuantity(index, v)}
-                    className="h-8 w-16 px-2 text-xs"
-                    inputMode="decimal"
-                    accessibilityLabel={`Quantity for ${item.food.name}`}
-                  />
-                  <Text className="font-mono text-[10px] text-muted">
-                    {item.food.servingUnit}
+            <GlassPanel key={item.food.id} className="mt-3 px-4 py-4">
+              <View className="flex-row items-center gap-3">
+                <View className="flex-1">
+                  <Text className="font-sans-medium text-sm text-primary" numberOfLines={1}>
+                    {item.food.name}
                   </Text>
+                  <View className="mt-2 flex-row items-center gap-2">
+                    <Input
+                      value={String(item.quantity)}
+                      onChangeText={(v) => updateQuantity(index, v)}
+                      className="h-10 w-20 px-3 text-sm"
+                      inputMode="decimal"
+                      accessibilityLabel={`Cantidad para ${item.food.name}`}
+                    />
+                    <Text className="font-sans text-xs text-secondary">{item.food.servingUnit}</Text>
+                  </View>
                 </View>
+                <Pressable
+                  onPress={() => removeFood(index)}
+                  className="ml-2 h-10 w-10 items-center justify-center rounded-full bg-fat/10"
+                  accessibilityRole="button"
+                  accessibilityLabel={`Quitar ${item.food.name}`}
+                >
+                  <Minus size={14} color="#FBBF24" strokeWidth={2} />
+                </Pressable>
               </View>
-              <Pressable
-                onPress={() => removeFood(index)}
-                className="ml-2 h-8 w-8 items-center justify-center rounded-sm active:bg-canvas"
-                accessibilityRole="button"
-                accessibilityLabel={`Remove ${item.food.name}`}
-              >
-                <Minus size={14} color="#DC2626" strokeWidth={2} />
-              </Pressable>
-            </View>
+            </GlassPanel>
           ))}
 
-          {/* Add food button */}
           {!showFoodPicker && (
             <Pressable
               onPress={() => setShowFoodPicker(true)}
-              className="mt-3 flex-row items-center justify-center gap-2 border border-dashed border-border py-3 active:bg-surface"
+              className="mt-3 flex-row items-center justify-center gap-2 rounded-[24px] border border-dashed border-border py-4 active:bg-surface"
               accessibilityRole="button"
-              accessibilityLabel="Add Ingredient"
+              accessibilityLabel="Anadir ingrediente"
             >
               <Plus size={14} color="#78716C" strokeWidth={2} />
-              <Text className="font-sans-medium text-xs text-secondary">
-                Add Ingredient
-              </Text>
+              <Text className="font-sans-medium text-xs text-secondary">Anadir ingrediente</Text>
             </Pressable>
           )}
 
-          {/* Inline food picker */}
           {showFoodPicker && (
-            <View className="mt-3 border border-border bg-surface">
-              <View className="flex-row items-center justify-between px-3 py-2">
+            <GlassPanel className="mt-3 px-4 py-4">
+              <View className="flex-row items-center justify-between">
                 <Text className="font-sans text-[10px] tracking-widest uppercase text-muted">
-                  SELECT A FOOD
+                  ELIGE UN ALIMENTO
                 </Text>
                 <Pressable
                   onPress={() => setShowFoodPicker(false)}
                   accessibilityRole="button"
-                  accessibilityLabel="Cancel Selection"
+                  accessibilityLabel="Cancelar seleccion"
                 >
-                  <Text className="font-sans-medium text-xs text-secondary">
-                    Cancel
-                  </Text>
+                  <Text className="font-sans-medium text-xs text-secondary">Cancelar</Text>
                 </Pressable>
               </View>
+
               {availableFoods.length === 0 ? (
                 <View className="px-3 py-4">
-                  <Text className="text-center font-sans text-xs text-muted">
-                    All foods already added
-                  </Text>
+                  <Text className="text-center font-sans text-xs text-muted">Ya has anadido todos los alimentos</Text>
                 </View>
               ) : (
-                availableFoods.map((food) => (
+                availableFoods.map((food, index) => (
                   <Pressable
                     key={food.id}
                     onPress={() => addFood(food)}
-                    className="flex-row items-center justify-between border-t border-border px-3 py-2.5 active:bg-canvas"
+                    className={`flex-row items-center justify-between px-2 py-3 active:bg-canvas ${index === 0 ? 'mt-3' : 'border-t border-border'}`}
                     accessibilityRole="button"
-                    accessibilityLabel={`Select ${food.name}`}
+                    accessibilityLabel={`Seleccionar ${food.name}`}
                   >
-                    <Text className="font-sans text-xs text-primary">
-                      {food.name}
-                    </Text>
+                    <Text className="font-sans text-sm text-primary">{food.name}</Text>
                     <Plus size={12} color="#78716C" strokeWidth={2} />
                   </Pressable>
                 ))
               )}
-            </View>
+            </GlassPanel>
           )}
-        </View>
+        </ScreenTransition>
 
-        {/* Totals preview */}
         {items.length > 0 && (
           <>
             <Separator className="mx-5 my-4" />
-            <View className="px-5">
+            <ScreenTransition variant="right" delay={80} className="px-5">
               <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-                TOTAL NUTRITION
+                TOTAL NUTRICIONAL
               </Text>
               <NutritionGrid macros={totalMacros} size="sm" className="mt-3" />
-            </View>
+            </ScreenTransition>
           </>
         )}
       </ScrollView>
 
-      {/* Save button */}
       <View className="border-t border-border bg-surface px-5 py-4">
-        <Button
-          onPress={handleSave}
-          disabled={!canSave}
-          accessibilityLabel="Save Dish"
-        >
-          <UIText>Save Dish</UIText>
+        <Button onPress={handleSave} disabled={!canSave} accessibilityLabel="Guardar plato">
+          <UIText>Guardar plato</UIText>
         </Button>
       </View>
     </SafeAreaView>

@@ -1,79 +1,57 @@
-import { View, Text, Pressable } from 'react-native';
-import { cn } from '@/lib/utils';
+import { Text, View } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
+import { GlassPanel } from '@/components/GlassPanel';
+import { cn } from '@/lib/utils';
 import type { Food } from '@/types/nutrition';
 
 type FoodListItemProps = {
   food: Food;
-  onPress?: () => void;
   className?: string;
 };
 
-export function FoodListItem({ food, onPress, className }: FoodListItemProps) {
-  const cals = Intl.NumberFormat('en-US', {
+export function FoodListItem({ food, className }: FoodListItemProps) {
+  const cals = Intl.NumberFormat('es-ES', {
     maximumFractionDigits: 0,
   }).format(food.per100g.calories);
 
   return (
-    <Pressable
-      onPress={onPress}
-      className={cn(
-        'flex-row items-center border-b border-border bg-surface px-4 py-3 active:bg-canvas',
-        className
-      )}
-      accessibilityRole="button"
-      accessibilityLabel={`${food.name}, ${cals} calories per 100 ${food.servingUnit}`}
-    >
-      {/* Left: name + serving info */}
-      <View className="flex-1">
-        <Text className="font-sans-medium text-sm text-primary" numberOfLines={1}>
-          {food.name}
-        </Text>
-        <View className="mt-0.5 flex-row items-center gap-2">
-          <Text className="font-mono text-[10px] tabular-nums text-secondary">
-            {food.servingSize}
-            {food.servingUnit}
+    <GlassPanel className={cn('px-4 py-4', className)}>
+      <View className="flex-row items-center justify-between gap-3">
+        <View className="flex-1">
+          <Text className="font-sans-medium text-base text-primary" numberOfLines={1}>
+            {food.name}
           </Text>
-          <View className="h-0.5 w-0.5 rounded-full bg-muted" />
-          <Text className="font-mono text-[10px] tabular-nums text-muted">
-            per 100{food.servingUnit}
-          </Text>
+          <View className="mt-1 flex-row items-center gap-2">
+            <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-secondary">
+              {food.servingSize}
+              {food.servingUnit}
+            </Text>
+            <View className="h-1 w-1 rounded-full bg-muted" />
+            <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-muted">
+              por 100{food.servingUnit}
+            </Text>
+          </View>
         </View>
+
+        <View className="items-end">
+          <Text className="font-sans-bold text-lg text-primary">{cals}</Text>
+          <Text className="font-sans text-[11px] uppercase tracking-[1.2px] text-brand">kcal</Text>
+        </View>
+
+        <ChevronRight size={16} color="#70806E" strokeWidth={1.7} />
       </View>
 
-      {/* Right: macro summary */}
-      <View className="flex-row items-center gap-3">
-        <View className="items-end">
-          <Text
-            className="font-mono-bold text-sm tabular-nums text-accent-green"
-            style={{ fontVariant: ['tabular-nums'] }}
-          >
-            {cals}
-          </Text>
-          <Text className="font-mono text-[9px] text-muted">kcal</Text>
+      <View className="mt-4 flex-row gap-2">
+        <View className="rounded-full bg-protein/10 px-3 py-2">
+          <Text className="font-sans text-[11px] text-protein">P {food.per100g.protein}g</Text>
         </View>
-        <View className="flex-row gap-1.5">
-          <Text
-            className="font-mono text-[10px] tabular-nums text-accent-blue"
-            style={{ fontVariant: ['tabular-nums'] }}
-          >
-            P{food.per100g.protein}
-          </Text>
-          <Text
-            className="font-mono text-[10px] tabular-nums text-accent-amber"
-            style={{ fontVariant: ['tabular-nums'] }}
-          >
-            C{food.per100g.carbs}
-          </Text>
-          <Text
-            className="font-mono text-[10px] tabular-nums text-accent-red"
-            style={{ fontVariant: ['tabular-nums'] }}
-          >
-            F{food.per100g.fats}
-          </Text>
+        <View className="rounded-full bg-carbs/10 px-3 py-2">
+          <Text className="font-sans text-[11px] text-carbs">C {food.per100g.carbs}g</Text>
         </View>
-        <ChevronRight size={14} color="#A8A29E" strokeWidth={1.5} />
+        <View className="rounded-full bg-fat/10 px-3 py-2">
+          <Text className="font-sans text-[11px] text-fat">G {food.per100g.fats}g</Text>
+        </View>
       </View>
-    </Pressable>
+    </GlassPanel>
   );
 }

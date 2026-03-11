@@ -17,7 +17,7 @@ import { StatusBar } from "expo-status-bar";
 import { View, Text, ActivityIndicator } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-SystemUI.setBackgroundColorAsync("#FAFAF9");
+SystemUI.setBackgroundColorAsync("#07110A");
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -31,23 +31,28 @@ export default function RootLayout() {
 
   if (!fontsLoaded) {
     return (
-      <View className="flex-1 items-center justify-center bg-canvas">
-        <ActivityIndicator size="small" color="#0C0A09" />
-        <Text className="mt-3 text-xs tracking-widest uppercase text-secondary">
-          Loading...
-        </Text>
+        <View
+          className="flex-1 items-center justify-center bg-canvas"
+          accessibilityRole="alert"
+          accessibilityLabel="Cargando aplicacion"
+        >
+          <ActivityIndicator size="small" color="#EC5B13" accessibilityLabel="Cargando" />
+          <Text className="mt-3 text-xs tracking-widest uppercase text-secondary">
+            Cargando...
+          </Text>
       </View>
     );
   }
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
-      <Stack
+      <StatusBar style="light" />
+        <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: "#FAFAF9" },
-          animation: "fade",
+          contentStyle: { backgroundColor: "#07110A" },
+          animation: "slide_from_right",
+          animationDuration: 220,
         }}
       >
         <Stack.Screen name="(tabs)" />
@@ -74,6 +79,10 @@ export default function RootLayout() {
         <Stack.Screen
           name="log/analyze"
           options={{ animation: "slide_from_bottom" }}
+        />
+        <Stack.Screen
+          name="history/calendar"
+          options={{ animation: "slide_from_right" }}
         />
         <Stack.Screen name="+not-found" />
       </Stack>

@@ -1,13 +1,15 @@
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Trash2, Play } from 'lucide-react-native';
+import { ArrowLeft, Trash2 } from 'lucide-react-native';
 import { NutritionGrid } from '@/components/NutritionGrid';
 import { MacroBar } from '@/components/MacroBar';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Text as UIText } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
+import { GlassPanel } from '@/components/GlassPanel';
+import { ScreenTransition } from '@/components/ScreenTransition';
 import { calculatePerServing } from '@/utils/calculatePerServing';
 import { sumMacros } from '@/utils/sumMacros';
 import { mockFavoriteDishes, mockFoods } from '@/mocks/nutrition';
@@ -27,22 +29,21 @@ export default function FavoriteDishDetailScreen() {
             onPress={() => router.back()}
             className="mr-3 h-9 w-9 items-center justify-center rounded-sm active:bg-canvas"
             accessibilityRole="button"
-            accessibilityLabel="Go Back"
+            accessibilityLabel="Volver atras"
           >
             <ArrowLeft size={18} color="#0C0A09" strokeWidth={1.6} />
           </Pressable>
         </View>
         <View className="flex-1 items-center justify-center px-5">
-          <Text className="font-sans-medium text-sm text-secondary">
-            Dish not found
-          </Text>
+          <Text className="font-sans-medium text-sm text-secondary">No se ha encontrado el plato</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  // Resolve items to their food entries and calculate macros
-  const resolvedItems = dish.items.map((item) => {
+  const currentDish = dish;
+
+  const resolvedItems = currentDish.items.map((item) => {
     const food = mockFoods.find((f) => f.id === item.foodId);
     const macros = food
       ? calculatePerServing(food.per100g, item.quantity)
@@ -50,146 +51,125 @@ export default function FavoriteDishDetailScreen() {
     return { ...item, food, macros };
   });
 
-  const totalMacros: MacroNutrients = sumMacros(
-    resolvedItems.map((i) => i.macros)
-  );
+  const totalMacros: MacroNutrients = sumMacros(resolvedItems.map((i) => i.macros));
 
-  const createdDate = new Intl.DateTimeFormat('en-US', {
+  const createdDate = new Intl.DateTimeFormat('es-ES', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-  }).format(new Date(dish.createdAt));
+  }).format(new Date(currentDish.createdAt));
 
   function handleDelete() {
     Alert.alert(
-      'Delete Dish',
-      `Are you sure you want to delete "${dish!.name}"? This cannot be undone.`,
+      'Borrar plato',
+      `Seguro que quieres borrar "${currentDish.name}"? Esto no se puede deshacer.`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Delete Dish',
+          text: 'Borrar plato',
           style: 'destructive',
-          onPress: () => {
-            // TODO: delete from DynamoDB
-            router.back();
-          },
+          onPress: () => router.back(),
         },
       ]
     );
   }
 
   function handleLogDish() {
-    // TODO: log this dish as a meal via API
-    Alert.alert('Meal Logged', `"${dish!.name}" has been logged.`, [
-      { text: 'OK', onPress: () => router.back() },
+    Alert.alert('Comida registrada', `"${currentDish.name}" se ha registrado correctamente.`, [
+      { text: 'Vale', onPress: () => router.back() },
     ]);
   }
 
   return (
     <SafeAreaView className="flex-1 bg-canvas" edges={['top']}>
-      {/* Header */}
       <View className="flex-row items-center justify-between border-b border-border bg-surface px-4 py-3">
         <View className="flex-row items-center">
           <Pressable
             onPress={() => router.back()}
             className="mr-3 h-9 w-9 items-center justify-center rounded-sm active:bg-canvas"
             accessibilityRole="button"
-            accessibilityLabel="Go Back"
+            accessibilityLabel="Volver atras"
           >
             <ArrowLeft size={18} color="#0C0A09" strokeWidth={1.6} />
           </Pressable>
           <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-            DISH DETAIL
+            DETALLE DEL PLATO
           </Text>
         </View>
         <Pressable
           onPress={handleDelete}
           className="h-9 w-9 items-center justify-center rounded-sm active:bg-canvas"
           accessibilityRole="button"
-          accessibilityLabel="Delete Dish"
+          accessibilityLabel="Borrar plato"
         >
           <Trash2 size={16} color="#DC2626" strokeWidth={1.6} />
         </Pressable>
       </View>
 
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Title */}
-        <View className="px-5 pt-5">
-          <Text className="font-sans-bold text-lg text-primary">
-            {dish.name}
-          </Text>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        <ScreenTransition variant="right" className="px-5 pt-5">
+          <Text className="font-sans-bold text-lg text-primary">{currentDish.name}</Text>
           <View className="mt-1.5 flex-row items-center gap-2">
             <Badge variant="secondary">
               <UIText className="text-[9px]">
-                {dish.items.length}{' '}
-                {dish.items.length === 1 ? 'ITEM' : 'ITEMS'}
+                {currentDish.items.length} {currentDish.items.length === 1 ? 'INGREDIENTE' : 'INGREDIENTES'}
               </UIText>
             </Badge>
-            <Text className="font-sans text-[10px] text-muted">
-              Created {createdDate}
-            </Text>
+            <Text className="font-sans text-[10px] text-muted">Creado el {createdDate}</Text>
           </View>
-        </View>
+        </ScreenTransition>
 
         <Separator className="mx-5 my-4" />
 
-        {/* Total nutrition */}
-        <View className="px-5">
+        <ScreenTransition variant="right" delay={40} className="px-5">
           <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-            TOTAL NUTRITION
+            TOTAL NUTRICIONAL
           </Text>
           <NutritionGrid macros={totalMacros} size="md" className="mt-3" />
           <MacroBar macros={totalMacros} className="mt-3" />
-        </View>
+        </ScreenTransition>
 
         <Separator className="mx-5 my-4" />
 
-        {/* Ingredients */}
-        <View className="px-5">
+        <ScreenTransition variant="right" delay={80} className="px-5">
           <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-            INGREDIENTS
+            INGREDIENTES
           </Text>
 
           {resolvedItems.map((item, index) => (
-            <View
-              key={index}
-              className="mt-3 flex-row items-center justify-between border border-border bg-surface p-3"
-            >
-              <View className="flex-1">
-                <Text
-                  className="font-sans-medium text-xs text-primary"
-                  numberOfLines={1}
-                >
-                  {item.food?.name ?? 'Unknown Food'}
-                </Text>
-                <Text className="mt-0.5 font-mono text-[10px] tabular-nums text-secondary">
-                  {item.quantity}
-                  {item.unit}
-                </Text>
+            <GlassPanel key={index} className="mt-3 px-4 py-4">
+              <View className="flex-row items-center justify-between gap-3">
+                <View className="flex-1">
+                  <Text className="font-sans-medium text-sm text-primary" numberOfLines={1}>
+                    {item.food?.name ?? 'Alimento desconocido'}
+                  </Text>
+                  <Text className="mt-1 font-sans text-[11px] uppercase tracking-[1.3px] text-secondary">
+                    {item.quantity}
+                    {item.unit}
+                  </Text>
+                </View>
+                <Text className="font-sans-bold text-lg text-primary">{item.macros.calories}</Text>
               </View>
-              <Text
-                className="font-mono-bold text-sm tabular-nums text-accent-green"
-                style={{ fontVariant: ['tabular-nums'] }}
-              >
-                {item.macros.calories}
-                <Text className="font-mono text-[9px] text-muted">
-                  {' '}
-                  kcal
-                </Text>
-              </Text>
-            </View>
+
+              <View className="mt-4 flex-row gap-2">
+                <View className="rounded-full bg-protein/10 px-3 py-2">
+                  <Text className="font-sans text-[11px] text-protein">P {item.macros.protein}g</Text>
+                </View>
+                <View className="rounded-full bg-carbs/10 px-3 py-2">
+                  <Text className="font-sans text-[11px] text-carbs">C {item.macros.carbs}g</Text>
+                </View>
+                <View className="rounded-full bg-fat/10 px-3 py-2">
+                  <Text className="font-sans text-[11px] text-fat">G {item.macros.fats}g</Text>
+                </View>
+              </View>
+            </GlassPanel>
           ))}
-        </View>
+        </ScreenTransition>
       </ScrollView>
 
-      {/* Log dish button */}
       <View className="border-t border-border bg-surface px-5 py-4">
-        <Button onPress={handleLogDish} accessibilityLabel="Log This Dish">
-          <UIText>Log This Dish</UIText>
+        <Button onPress={handleLogDish} accessibilityLabel="Registrar este plato">
+          <UIText>Registrar este plato</UIText>
         </Button>
       </View>
     </SafeAreaView>

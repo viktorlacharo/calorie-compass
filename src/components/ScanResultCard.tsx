@@ -50,7 +50,7 @@ function LabelScanCard({
     <View
       className={cn('border-border bg-surface border p-4', className)}
       accessibilityRole="summary"
-      accessibilityLabel={`Scan result: ${result.detectedName}, ${confidence}% confidence`}
+      accessibilityLabel={`Resultado del escaneo: ${result.detectedName}, ${confidence}% de confianza`}
     >
       <View className="flex-row items-center justify-between">
         <Text className="font-sans-medium text-sm text-primary">
@@ -63,7 +63,7 @@ function LabelScanCard({
 
       <Text className="mt-1 font-mono text-[10px] tabular-nums text-secondary">
         {result.servingSize}
-        {result.servingUnit} per serving
+        {result.servingUnit} por racion
       </Text>
 
       <Separator className="my-3" />
@@ -84,15 +84,15 @@ function VisualScanCard({
     <View
       className={cn('border-border bg-surface border p-4', className)}
       accessibilityRole="summary"
-      accessibilityLabel={`Visual analysis: ${result.items.length} items detected`}
+      accessibilityLabel={`Analisis visual: ${result.items.length} elementos detectados`}
     >
       <View className="flex-row items-center justify-between">
         <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-          DETECTED ITEMS
+          ELEMENTOS DETECTADOS
         </Text>
         <Badge variant="secondary">
           <UIText className="text-[9px]">
-            {result.items.length} {result.items.length === 1 ? 'ITEM' : 'ITEMS'}
+            {result.items.length} {result.items.length === 1 ? 'ELEMENTO' : 'ELEMENTOS'}
           </UIText>
         </Badge>
       </View>
@@ -103,7 +103,11 @@ function VisualScanCard({
         return (
           <View key={index}>
             {index > 0 && <Separator className="my-2" />}
-            <View className="mt-2 flex-row items-center justify-between">
+            <View
+              className="mt-2 flex-row items-center justify-between"
+              accessibilityRole="text"
+              accessibilityLabel={`${item.detectedFoodName}, aproximadamente ${item.estimatedQuantity}${item.estimatedUnit}, ${item.estimatedMacros.calories} calorias, ${confidence}% de confianza`}
+            >
               <View className="flex-1">
                 <Text className="font-sans-medium text-xs text-primary">
                   {item.detectedFoodName}
@@ -121,7 +125,7 @@ function VisualScanCard({
                   {item.estimatedMacros.calories}
                 </Text>
                 <Text className="font-mono text-[9px] text-muted">
-                  {confidence}% match
+                  {confidence}% encaje
                 </Text>
               </View>
             </View>
