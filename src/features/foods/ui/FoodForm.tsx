@@ -63,7 +63,6 @@ export function FoodForm({
               onChangeText={(value) => onChange('name', value)}
               placeholder="Ej. pechuga de pollo"
               className="mt-1.5"
-              autoFocus
               accessibilityLabelledBy="food-name"
               accessibilityLabel="Nombre del alimento"
             />

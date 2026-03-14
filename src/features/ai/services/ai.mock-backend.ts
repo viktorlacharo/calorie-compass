@@ -1,7 +1,18 @@
-import { mockNutritionLabelScan, mockVisualAnalysis, MOCK_DAILY_BUDGET, MOCK_DAILY_MACRO_TARGET } from '@/mocks/nutrition';
+import { mockNutritionLabelScan, mockVisualAnalysis } from '@/mocks/nutrition';
+import { AI_DAILY_BUDGET, AI_DAILY_MACRO_TARGET } from '@/features/ai/config/ai.constants';
 import { simulateFoodsRequest } from '@/features/foods/services/foods.mock-service';
 import { calculatePerServing } from '@/utils/calculatePerServing';
 import { sumMacros } from '@/utils/sumMacros';
+import type {
+  AiSuggestionRequest,
+  AiSuggestionResponse,
+  AnalyzeMealImageRequest,
+  AnalyzeMealImageResponse,
+  CreateRecipeDraftRequest,
+  CreateRecipeDraftResponse,
+  ScanNutritionLabelRequest,
+  ScanNutritionLabelResponse,
+} from '@/features/ai/domain/ai.contracts';
 import type {
   AiRecipeDraft,
   FavoriteDish,
@@ -12,7 +23,6 @@ import type {
   MealSuggestionMode,
   MealSuggestionRequest,
   MealSuggestionResponse,
-  NutritionLabelScanResult,
   VisualAnalysisResult,
 } from '@/types/nutrition';
 
@@ -146,7 +156,7 @@ function buildAssistantIntro(mode: MealSuggestionMode, focus?: MealSuggestionFoc
   return 'Estas son las opciones mas alineadas con tu dia y con los alimentos que realmente tienes registrados.';
 }
 
-export async function getMealSuggestions(request: MealSuggestionRequest): Promise<MealSuggestionResponse> {
+export async function getMealSuggestions(request: AiSuggestionRequest): Promise<AiSuggestionResponse> {
   return simulateFoodsRequest(() => {
     const foodsOnly = buildFoodsOnlySuggestions(request.foodsCatalog, request);
     const favoriteAdaptations = buildFavoriteAdaptations(request.favoriteDishes, request.foodsCatalog);
@@ -162,6 +172,8 @@ export async function getMealSuggestions(request: MealSuggestionRequest): Promis
       assistantIntro: buildAssistantIntro(request.mode, request.focus),
       assistantFollowUp: 'Todas las propuestas se apoyan unicamente en tu catalogo y recetas ya guardadas.',
       suggestions: filtered,
+      provider: 'mock',
+      generatedAt: new Date().toISOString(),
     };
   });
 }
@@ -182,52 +194,56 @@ function buildDraftSteps(foodNames: string[], sourceKind: MealSuggestion['source
   ];
 }
 
-export async function createRecipeDraftFromSuggestion(input: {
-  suggestion: MealSuggestion;
-  modeLabel: string;
-  foodsCatalog: Food[];
-}): Promise<AiRecipeDraft> {
+export async function createRecipeDraftFromSuggestion(input: CreateRecipeDraftRequest): Promise<CreateRecipeDraftResponse> {
   return simulateFoodsRequest(() => {
+    const suggestion = input.sourceResponse.suggestions.find((entry) => entry.id === input.suggestionId);
+
+    if (!suggestion) {
+      throw new Error('Suggestion not found in source response');
+    }
+
     const foodMap = buildFoodMap(input.foodsCatalog);
-    const foodNames = input.suggestion.items
+    const foodNames = suggestion.items
       .map((item) => foodMap.get(item.foodId)?.name)
       .filter((name): name is string => Boolean(name));
 
     return {
       draftId: `draft_${Date.now()}`,
-      suggestionId: input.suggestion.id,
-      title: input.suggestion.title,
+      suggestionId: suggestion.id,
+      title: suggestion.title,
       description:
-        input.suggestion.sourceKind === 'favorite-adaptation'
+        suggestion.sourceKind === 'favorite-adaptation'
           ? 'Borrador generado desde una receta ya conocida y ajustado con tus cantidades actuales.'
           : 'Borrador generado solo con alimentos reales de tu catalogo curado.',
-      whyItFits: input.suggestion.whyItFits,
-      items: input.suggestion.items.map((item) => ({ ...item })),
-      estimatedMacros: { ...input.suggestion.estimatedMacros },
-      estimatedCalories: input.suggestion.estimatedCalories,
+      whyItFits: suggestion.whyItFits,
+      items: suggestion.items.map((item) => ({ ...item })),
+      estimatedMacros: { ...suggestion.estimatedMacros },
+      estimatedCalories: suggestion.estimatedCalories,
       modeLabel: input.modeLabel,
-      sourceLabel: input.suggestion.sourceLabel,
+      sourceLabel: suggestion.sourceLabel,
       tags: Array.from(
         new Set([
           'Sugerida por AI',
           input.modeLabel,
-          input.suggestion.sourceKind === 'favorite-adaptation' ? 'Basada en favorito' : 'Desde catalogo',
+          suggestion.sourceKind === 'favorite-adaptation' ? 'Basada en favorito' : 'Desde catalogo',
         ])
       ),
-      steps: buildDraftSteps(foodNames, input.suggestion.sourceKind),
+      steps: buildDraftSteps(foodNames, suggestion.sourceKind),
+      provider: 'mock',
     };
   });
 }
 
-export async function scanNutritionLabel(input: { imageUri: string }): Promise<NutritionLabelScanResult> {
+export async function scanNutritionLabel(input: ScanNutritionLabelRequest): Promise<ScanNutritionLabelResponse> {
   return simulateFoodsRequest(() => ({
     ...mockNutritionLabelScan,
     detectedName: mockNutritionLabelScan.detectedName,
     confidence: mockNutritionLabelScan.confidence,
+    provider: 'mock',
   }));
 }
 
-export async function analyzeMealImage(input: { imageUri: string; foodsCatalog: Food[] }): Promise<VisualAnalysisResult> {
+export async function analyzeMealImage(input: AnalyzeMealImageRequest): Promise<AnalyzeMealImageResponse> {
   return simulateFoodsRequest(() => {
     const catalogMap = new Map(input.foodsCatalog.map((food) => [food.id, food]));
     const items = mockVisualAnalysis.items
@@ -250,9 +266,7 @@ export async function analyzeMealImage(input: { imageUri: string; foodsCatalog: 
       imageId: `visual_${Date.now()}`,
       items,
       total: sumMacros(items.map((item) => item.estimatedMacros)),
+      provider: 'mock',
     };
   });
 }
-
-export const AI_DAILY_BUDGET = MOCK_DAILY_BUDGET;
-export const AI_DAILY_MACRO_TARGET = MOCK_DAILY_MACRO_TARGET;

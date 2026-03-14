@@ -3,6 +3,7 @@ import { Link, type Href } from 'expo-router';
 import { Coffee, Cookie, MoonStar, SunMedium } from 'lucide-react-native';
 import { Badge } from '@/components/ui/badge';
 import { GlassPanel } from '@/components/GlassPanel';
+import { MacroMicroTable } from '@/components/MacroMicroTable';
 import { cn } from '@/lib/utils';
 import type { MealLogEntry } from '@/types/nutrition';
 
@@ -110,32 +111,10 @@ export function MealLogCard({
                 {entry.notes ?? tone.title}
               </Text>
               {showMacros ? (
-                <View className="mt-2 flex-row gap-4">
-                  <View>
-                    <Text className="font-sans text-[10px] uppercase tracking-[1.2px] text-muted">
-                      Proteina
-                    </Text>
-                    <Text className="mt-1 font-sans-medium text-xs text-primary">
-                      {entry.total.protein}g
-                    </Text>
-                  </View>
-                  <View>
-                    <Text className="font-sans text-[10px] uppercase tracking-[1.2px] text-muted">
-                      Carbs
-                    </Text>
-                    <Text className="mt-1 font-sans-medium text-xs text-primary">
-                      {entry.total.carbs}g
-                    </Text>
-                  </View>
-                  <View>
-                    <Text className="font-sans text-[10px] uppercase tracking-[1.2px] text-muted">
-                      Grasa
-                    </Text>
-                    <Text className="mt-1 font-sans-medium text-xs text-primary">
-                      {entry.total.fats}g
-                    </Text>
-                  </View>
-                </View>
+                <MacroMicroTable
+                  macros={entry.total}
+                  className="mt-3"
+                />
               ) : null}
             </View>
           </View>

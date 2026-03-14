@@ -3,7 +3,7 @@ import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Camera, Check, ChevronRight, Link2, Plus, Sparkles } from 'lucide-react-native';
+import { ArrowLeft, Camera, Check, ChevronRight, Link2, Plus, Sparkles, Trash2 } from 'lucide-react-native';
 import { SUPERMARKETS } from '@/constants/supermarkets';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -332,7 +332,6 @@ export default function CreateFavoriteScreen() {
                 onChangeText={setName}
                 placeholder="Ej. bowl de pollo para diario"
                 className="mt-1.5"
-                autoFocus
                 accessibilityLabelledBy="dish-name"
                 accessibilityLabel="Nombre de la receta"
               />
@@ -390,7 +389,7 @@ export default function CreateFavoriteScreen() {
                 <Input
                   value={tagDraft}
                   onChangeText={setTagDraft}
-                  placeholder="Ej. postentreno, cena rapida, meal prep"
+                  placeholder="Ej. postentreno, tupper"
                   className="flex-1"
                   accessibilityLabel="Nueva tag personalizada"
                   onSubmitEditing={addCustomTag}
@@ -410,7 +409,10 @@ export default function CreateFavoriteScreen() {
                       accessibilityRole="button"
                       accessibilityLabel={`Quitar tag ${tag}`}
                     >
-                      <Text className="font-sans text-xs text-primary">{tag} x</Text>
+                      <View className="flex-row items-center gap-2">
+                        <Text className="font-sans text-xs text-primary">{tag}</Text>
+                        <Trash2 size={12} color="#F5F7F2" strokeWidth={2} />
+                      </View>
                     </Pressable>
                   ))}
                 </View>
@@ -418,7 +420,7 @@ export default function CreateFavoriteScreen() {
             </ScreenTransition>
 
             <ScreenTransition delay={80} className="px-5">
-              <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center mt-4 justify-between">
                 <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">INGREDIENTES</Text>
                 <Text className="font-mono text-[10px] tabular-nums text-muted">
                   {items.length} {items.length === 1 ? 'ingrediente' : 'ingredientes'}

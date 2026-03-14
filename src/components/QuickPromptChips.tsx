@@ -10,12 +10,14 @@ type QuickPromptChipsProps<T extends string> = {
   options: ChipOption<T>[];
   selectedValue?: T;
   onSelect: (value: T) => void;
+  disabled?: boolean;
 };
 
 export function QuickPromptChips<T extends string>({
   options,
   selectedValue,
   onSelect,
+  disabled = false,
 }: QuickPromptChipsProps<T>) {
   return (
     <View className="flex-row flex-wrap gap-2">
@@ -26,8 +28,10 @@ export function QuickPromptChips<T extends string>({
           <Pressable
             key={option.value}
             onPress={() => onSelect(option.value)}
+            disabled={disabled}
             className={cn(
               'rounded-full px-4 py-3 active:opacity-90',
+              disabled && 'opacity-60',
               selected ? 'bg-accent-blue/15' : 'bg-forest-panelAlt'
             )}
             accessibilityRole="button"

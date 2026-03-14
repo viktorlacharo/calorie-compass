@@ -1,11 +1,21 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { aiQueryKeys } from '@/features/ai/queries/ai.query-keys';
-import { analyzeMealImage, createRecipeDraftFromSuggestion, getMealSuggestions, scanNutritionLabel } from '@/features/ai/services/ai.mock-backend';
-import type { AiRecipeDraft, Food, MealSuggestion, MealSuggestionRequest } from '@/types/nutrition';
+import {
+  analyzeMealImage,
+  createRecipeDraftFromSuggestion,
+  getMealSuggestions,
+  scanNutritionLabel,
+} from '@/features/ai/services/ai.service';
+import type {
+  AiSuggestionRequest,
+  CreateRecipeDraftRequest,
+  CreateRecipeDraftResponse,
+} from '@/features/ai/domain/ai.contracts';
+import type { Food } from '@/types/nutrition';
 
 export function useMealSuggestionsMutation() {
   return useMutation({
-    mutationFn: (request: MealSuggestionRequest) => getMealSuggestions(request),
+    mutationFn: (request: AiSuggestionRequest) => getMealSuggestions(request),
   });
 }
 
@@ -13,9 +23,8 @@ export function useCreateRecipeDraftMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: { suggestion: MealSuggestion; modeLabel: string; foodsCatalog: Food[] }) =>
-      createRecipeDraftFromSuggestion(input),
-    onSuccess: (draft: AiRecipeDraft) => {
+    mutationFn: (input: CreateRecipeDraftRequest) => createRecipeDraftFromSuggestion(input),
+    onSuccess: (draft: CreateRecipeDraftResponse) => {
       queryClient.setQueryData(aiQueryKeys.selectedRecipeDraft(), draft);
     },
   });

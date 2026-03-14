@@ -12,7 +12,7 @@ import { ScanResultCard } from '@/components/ScanResultCard';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { useVisualAnalysisMutation } from '@/features/ai/queries/use-ai-query';
 import { useFoodsQuery } from '@/features/foods/queries/use-foods-query';
-import type { VisualAnalysisResult } from '@/types/nutrition';
+import type { AnalyzeMealImageResponse } from '@/features/ai/domain/ai.contracts';
 
 type AnalysisState = 'idle' | 'analyzing' | 'result';
 
@@ -20,7 +20,7 @@ export default function VisualAnalysisScreen() {
   const router = useRouter();
   const [state, setState] = useState<AnalysisState>('idle');
   const [capturedImageUri, setCapturedImageUri] = useState<string | null>(null);
-  const [result, setResult] = useState<VisualAnalysisResult | null>(null);
+  const [result, setResult] = useState<AnalyzeMealImageResponse | null>(null);
   const { data: foods = [] } = useFoodsQuery('');
   const visualAnalysisMutation = useVisualAnalysisMutation();
 

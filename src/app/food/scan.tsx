@@ -11,7 +11,7 @@ import { ScreenTransition } from '@/components/ScreenTransition';
 import { GlassPanel } from '@/components/GlassPanel';
 import { ScanResultCard } from '@/components/ScanResultCard';
 import { useNutritionLabelScanMutation } from '@/features/ai/queries/use-ai-query';
-import type { NutritionLabelScanResult } from '@/types/nutrition';
+import type { ScanNutritionLabelResponse } from '@/features/ai/domain/ai.contracts';
 
 type ScanState = 'idle' | 'scanning' | 'result';
 
@@ -19,7 +19,7 @@ export default function ScanLabelScreen() {
   const router = useRouter();
   const [state, setState] = useState<ScanState>('idle');
   const [capturedImageUri, setCapturedImageUri] = useState<string | null>(null);
-  const [result, setResult] = useState<NutritionLabelScanResult | null>(null);
+  const [result, setResult] = useState<ScanNutritionLabelResponse | null>(null);
   const nutritionLabelScanMutation = useNutritionLabelScanMutation();
 
   async function handleCapture() {

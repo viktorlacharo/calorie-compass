@@ -1,0 +1,4 @@
+import { MOCK_DAILY_BUDGET, MOCK_DAILY_MACRO_TARGET } from '@/mocks/nutrition';
+
+export const AI_DAILY_BUDGET = MOCK_DAILY_BUDGET;
+export const AI_DAILY_MACRO_TARGET = MOCK_DAILY_MACRO_TARGET;

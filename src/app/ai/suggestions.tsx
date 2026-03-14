@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Sparkles } from 'lucide-react-native';
-import { AssistantMessage } from '@/components/AssistantMessage';
 import { MealSuggestionCard } from '@/components/MealSuggestionCard';
 import { NutriScore } from '@/components/NutriScore';
 import { QuickPromptChips } from '@/components/QuickPromptChips';
@@ -16,18 +15,19 @@ import { useFoodsQuery } from '@/features/foods/queries/use-foods-query';
 import { useFavoritesQuery } from '@/features/favorites/queries/use-favorites-query';
 import { useTodayEntriesQuery } from '@/features/logs/queries/use-logs-query';
 import { aiQueryKeys } from '@/features/ai/queries/ai.query-keys';
-import { AI_DAILY_BUDGET, AI_DAILY_MACRO_TARGET } from '@/features/ai/services/ai.mock-backend';
+import { AI_DAILY_BUDGET, AI_DAILY_MACRO_TARGET } from '@/features/ai/config/ai.constants';
 import { useCreateRecipeDraftMutation, useMealSuggestionsMutation } from '@/features/ai/queries/use-ai-query';
 import { calculateNutritionScore } from '@/utils/calculateNutritionScore';
 import { sumMacros } from '@/utils/sumMacros';
 import type {
   MealSuggestionFocus,
   MealSuggestionMode,
-  MealSuggestionRequest,
   MealSuggestionResponse,
 } from '@/types/nutrition';
+import type { AiSuggestionRequest } from '@/features/ai/domain/ai.contracts';
 
-type SuggestionScreenState = 'chooser' | 'alternate-focus' | 'loading' | 'result';
+type SuggestionScreenState = 'chooser' | 'alternate-focus' | 'result';
+const MIN_LOADER_MS = 350;
 
 const geminiLogo = require('../../../assets/google-gemini.png');
 
@@ -73,6 +73,7 @@ export default function MealSuggestionsScreen() {
   const [selectedMode, setSelectedMode] = useState<MealSuggestionMode | null>(null);
   const [selectedFocus, setSelectedFocus] = useState<MealSuggestionFocus | undefined>(undefined);
   const [response, setResponse] = useState<MealSuggestionResponse | null>(null);
+  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
 
   const todayTotals = useMemo(() => sumMacros(mealLogEntries.map((entry) => entry.total)), [mealLogEntries]);
   const completion = Math.min(100, Math.round((todayTotals.calories / AI_DAILY_BUDGET) * 100));
@@ -101,7 +102,7 @@ export default function MealSuggestionsScreen() {
   }
 
   async function requestSuggestions(mode: MealSuggestionMode, focus?: MealSuggestionFocus) {
-    const payload: MealSuggestionRequest = {
+    const payload: AiSuggestionRequest = {
       mode,
       focus,
       nutritionScore,
@@ -117,11 +118,24 @@ export default function MealSuggestionsScreen() {
 
     setSelectedMode(mode);
     setSelectedFocus(focus);
-    setScreenState('loading');
+    setResponse(null);
+    setIsSuggestionsLoading(true);
 
-    const nextResponse = await mealSuggestionsMutation.mutateAsync(payload);
-    setResponse(nextResponse);
-    setScreenState('result');
+    const requestStartedAt = Date.now();
+
+    try {
+      const nextResponse = await mealSuggestionsMutation.mutateAsync(payload);
+      const elapsed = Date.now() - requestStartedAt;
+
+      if (elapsed < MIN_LOADER_MS) {
+        await new Promise((resolve) => setTimeout(resolve, MIN_LOADER_MS - elapsed));
+      }
+
+      setResponse(nextResponse);
+      setScreenState('result');
+    } finally {
+      setIsSuggestionsLoading(false);
+    }
   }
 
   function handleReset() {
@@ -133,10 +147,17 @@ export default function MealSuggestionsScreen() {
   }
 
   async function handleConvertToRecipe(suggestion: NonNullable<MealSuggestionResponse>['suggestions'][number]) {
+    if (!response || !selectedMode) {
+      return;
+    }
+
     await createRecipeDraftMutation.mutateAsync({
-      suggestion,
+      suggestionId: suggestion.id,
+      mode: selectedMode,
+      focus: selectedFocus,
       modeLabel: selectedModeMeta?.title ?? 'Sugerencia AI',
       foodsCatalog: foods,
+      sourceResponse: response,
     });
 
     router.push('/favorite/create');
@@ -168,7 +189,11 @@ export default function MealSuggestionsScreen() {
             </View>
 
             <View className="h-14 w-14 items-center justify-center rounded-full bg-white/8">
-              <Image source={geminiLogo} className="h-8 w-8" resizeMode="contain" />
+              {isSuggestionsLoading ? (
+                <ActivityIndicator size="small" color="#60A5FA" />
+              ) : (
+                <Image source={geminiLogo} className="h-8 w-8" resizeMode="contain" />
+              )}
             </View>
           </View>
         </ScreenTransition>
@@ -184,7 +209,7 @@ export default function MealSuggestionsScreen() {
           />
         </ScreenTransition>
 
-        {screenState === 'chooser' ? (
+        {screenState === 'chooser' && !response ? (
           <>
             <ScreenTransition delay={70} className="px-5 pt-6">
               <Text className="font-sans text-[11px] uppercase tracking-[1.8px] text-secondary">Elige el tipo de sugerencia</Text>
@@ -195,6 +220,7 @@ export default function MealSuggestionsScreen() {
                 <ScreenTransition key={option.value} delay={100 + index * 30}>
                   <Pressable
                     onPress={() => handleModeSelect(option.value)}
+                    disabled={isSuggestionsLoading}
                     className="rounded-[30px] bg-surface px-5 py-5 active:opacity-90"
                     accessibilityRole="button"
                     accessibilityLabel={option.title}
@@ -205,7 +231,11 @@ export default function MealSuggestionsScreen() {
                         <Text className="mt-2 font-sans text-sm leading-6 text-secondary">{option.description}</Text>
                       </View>
                       <View className="h-12 w-12 items-center justify-center rounded-full bg-forest-panelAlt">
-                        <Sparkles size={18} color="#A9B8A8" strokeWidth={2} />
+                        {isSuggestionsLoading && selectedMode === option.value ? (
+                          <ActivityIndicator size="small" color="#60A5FA" />
+                        ) : (
+                          <Sparkles size={18} color="#A9B8A8" strokeWidth={2} />
+                        )}
                       </View>
                     </View>
                   </Pressable>
@@ -215,7 +245,7 @@ export default function MealSuggestionsScreen() {
           </>
         ) : null}
 
-        {screenState === 'alternate-focus' ? (
+        {screenState === 'alternate-focus' && !response ? (
           <>
             <ScreenTransition delay={70} className="px-5 pt-6">
               <Text className="font-sans text-[11px] uppercase tracking-[1.8px] text-secondary">Otro enfoque</Text>
@@ -225,38 +255,52 @@ export default function MealSuggestionsScreen() {
             </ScreenTransition>
 
             <ScreenTransition delay={100} className="px-5 pt-4">
-              <QuickPromptChips options={FOCUS_OPTIONS} onSelect={(value) => requestSuggestions('alternate', value)} />
+              <QuickPromptChips
+                options={FOCUS_OPTIONS}
+                selectedValue={selectedFocus}
+                onSelect={(value) => requestSuggestions('alternate', value)}
+                disabled={isSuggestionsLoading}
+              />
             </ScreenTransition>
 
             <ScreenTransition delay={140} className="px-5 pt-6">
-              <Button variant="outline" onPress={handleReset} accessibilityLabel="Volver a tipos de sugerencia">
+              <Button variant="outline" onPress={handleReset} disabled={isSuggestionsLoading} accessibilityLabel="Volver a tipos de sugerencia">
                 <UIText>Volver a tipos de sugerencia</UIText>
               </Button>
             </ScreenTransition>
           </>
         ) : null}
 
-        {screenState === 'loading' ? (
-          <ScreenTransition delay={80} className="px-5 pt-6">
-            <AssistantMessage
-              title="Preparando ideas"
-              message="Estamos consultando una propuesta basada solo en tu catalogo y tu progreso de hoy."
-              visual="loading"
-            />
-          </ScreenTransition>
-        ) : null}
-
         {screenState === 'result' && response ? (
           <>
             <ScreenTransition delay={80} className="px-5 pt-6">
-              <AssistantMessage title={selectedModeMeta?.title ?? 'Sugerencias listas'} message={response.assistantIntro} />
+              <View className="overflow-hidden rounded-[30px] bg-forest-panelAlt px-5 py-5">
+                <View className="flex-row items-start justify-between gap-3">
+                  <View className="flex-1">
+                    <Text className="font-sans text-[10px] uppercase tracking-[2px] text-accent-blue">Gemini</Text>
+                    <Text className="mt-2 font-sans-bold text-[24px] leading-7 text-primary">
+                      {selectedModeMeta?.title ?? 'Sugerencias listas'}
+                    </Text>
+                    <Text className="mt-3 font-sans text-sm leading-6 text-secondary">{response.assistantIntro}</Text>
+                  </View>
+
+                  <View className="h-12 w-12 items-center justify-center rounded-full bg-white/10">
+                    <Image source={geminiLogo} className="h-7 w-7" resizeMode="contain" />
+                  </View>
+                </View>
+              </View>
             </ScreenTransition>
 
             {selectedMode === 'alternate' ? (
               <ScreenTransition delay={160} className="px-5 pt-6">
                 <Text className="font-sans text-[11px] uppercase tracking-[1.8px] text-secondary">Ajustar enfoque</Text>
                 <View className="mt-4">
-                  <QuickPromptChips options={FOCUS_OPTIONS} selectedValue={selectedFocus} onSelect={(value) => requestSuggestions('alternate', value)} />
+                  <QuickPromptChips
+                    options={FOCUS_OPTIONS}
+                    selectedValue={selectedFocus}
+                    onSelect={(value) => requestSuggestions('alternate', value)}
+                    disabled={isSuggestionsLoading}
+                  />
                 </View>
               </ScreenTransition>
             ) : null}
@@ -297,10 +341,15 @@ export default function MealSuggestionsScreen() {
             <ScreenTransition delay={280} className="px-5 pt-6">
               <Separator />
               <View className="mt-6 gap-3">
-                <Button variant="secondary" onPress={() => void requestSuggestions(selectedMode ?? 'recommended', selectedFocus)} accessibilityLabel="Generar otras ideas">
+                <Button
+                  variant="secondary"
+                  onPress={() => void requestSuggestions(selectedMode ?? 'recommended', selectedFocus)}
+                  disabled={isSuggestionsLoading}
+                  accessibilityLabel="Generar otras ideas"
+                >
                   <UIText>Generar otras ideas</UIText>
                 </Button>
-                <Button variant="outline" onPress={handleReset} accessibilityLabel="Cambiar enfoque de sugerencia">
+                <Button variant="outline" onPress={handleReset} disabled={isSuggestionsLoading} accessibilityLabel="Cambiar enfoque de sugerencia">
                   <UIText>Cambiar enfoque</UIText>
                 </Button>
               </View>

@@ -70,6 +70,9 @@ Migrar la app desde estado global en contexto hacia una capa de datos orientada 
 
 ### 7. Paso final hacia backend real
 
+- [x] Definir contratos de request/response para endpoints AI serverless
+- [x] Anadir cliente HTTP base y selector mock/lambda por configuracion
+- [x] Sustituir implementaciones AI por una capa de servicio intercambiable
 - [ ] Sustituir implementaciones mock por cliente HTTP real
 - [ ] Mantener query keys y hooks publicos para no reescribir pantallas
 - [ ] Conectar con API Gateway + Lambdas por dominio
@@ -80,4 +83,5 @@ Migrar la app desde estado global en contexto hacia una capa de datos orientada 
 
 - La app ya no depende de `NutritionContext`; el estado de datos activo pasa por dominios query-backed y cache de TanStack Query.
 - `foods`, `favorites`, `logs/dashboard/history` y `ai suggestions` ya siguen el flujo mock asincrono con contratos mas cercanos a backend real.
-- Queda pendiente principalmente el reemplazo del mock AI por Lambdas reales y la conexion final a AWS.
+- La app ya tiene contratos AI y una capa `service` intercambiable lista para apuntar a Lambda mediante `EXPO_PUBLIC_AI_API_MODE=lambda` y `EXPO_PUBLIC_API_BASE_URL`.
+- Queda pendiente conectar endpoints reales en AWS, autenticacion, subida de imagenes y persistencia serverless completa.
