@@ -1,75 +1,44 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { Link } from 'expo-router';
 import { CalendarDays, ChartColumnBig, Scale } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BarChartCard, LineChartCard, MacroTrendCard } from '@/components/AnalyticsCharts';
+import { BarChartCard, MacroTrendCard } from '@/components/AnalyticsCharts';
 import { GlassPanel } from '@/components/GlassPanel';
+import { AnalyticsOverviewSkeleton, MealLogCardSkeleton, SkeletonBlock } from '@/components/QuerySkeletons';
 import { ScreenTransition } from '@/components/ScreenTransition';
-import { mockDailyNutritionLogs, mockWeightEntries, MOCK_DAILY_BUDGET } from '@/mocks/nutrition';
-import { sumMacros } from '@/utils/sumMacros';
+import { useTimelineQuery } from '@/features/logs/queries/use-logs-query';
 
 type RangeMode = 'week' | 'month';
 
-function average(values: number[]) {
-  if (values.length === 0) return 0;
-  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-}
-
 export default function TimelineScreen() {
   const [range, setRange] = useState<RangeMode>('week');
-
-  const analytics = useMemo(() => {
-    const logs = range === 'week' ? mockDailyNutritionLogs.slice(-7) : mockDailyNutritionLogs;
-    const macroTotals = sumMacros(logs.map((log) => log.total));
-    const calorieSeries = logs.map((log) => ({
-      label: range === 'week' ? new Date(`${log.date}T12:00:00.000Z`).toLocaleDateString('es-ES', { weekday: 'short' }) : String(new Date(`${log.date}T12:00:00.000Z`).getUTCDate()),
-      value: log.total.calories,
-    }));
-
-    const averageCalories = average(logs.map((log) => log.total.calories));
-    const adherence = Math.round(
-      (logs.filter((log) => log.total.calories <= log.calorieTarget).length / logs.length) * 100
-    );
-    const bestDay = logs.reduce((best, log) =>
-      Math.abs(log.calorieTarget - log.total.calories) < Math.abs(best.calorieTarget - best.total.calories)
-        ? log
-        : best
-    );
-
-    const weightSeriesSource =
-      range === 'week' ? mockWeightEntries.slice(-4) : mockWeightEntries;
-    const weightSeries = weightSeriesSource.map((entry) => ({
-      label: range === 'week'
-        ? new Date(`${entry.date}T12:00:00.000Z`).toLocaleDateString('es-ES', { weekday: 'short' })
-        : new Date(`${entry.date}T12:00:00.000Z`).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }),
-      value: entry.weightKg,
-    }));
-    const firstWeight = weightSeriesSource[0]?.weightKg ?? 0;
-    const currentWeight = weightSeriesSource[weightSeriesSource.length - 1]?.weightKg ?? 0;
-    const delta = Number((currentWeight - firstWeight).toFixed(1));
-
-    return {
-      logs,
-      calorieSeries,
-      macroTotals,
-      averageCalories,
-      adherence,
-      bestDay,
-      mealCount: logs.reduce((sum, log) => sum + log.mealCount, 0),
-      weightSeries,
-      firstWeight,
-      currentWeight,
-      delta,
-    };
-  }, [range]);
+  const { data, isLoading } = useTimelineQuery(range);
+  const isInitialLoading = isLoading && !data;
+  const analytics = data ?? {
+    logs: [],
+    calorieSeries: [],
+    macroTotals: { calories: 0, protein: 0, carbs: 0, fats: 0 },
+    averageCalories: 0,
+    adherence: 0,
+    bestDay: { date: new Date().toISOString().slice(0, 10), calorieTarget: 2200, total: { calories: 0, protein: 0, carbs: 0, fats: 0 } },
+    mealCount: 0,
+    weightSeries: [],
+    firstWeight: 0,
+    currentWeight: 0,
+    delta: 0,
+  };
+  const logCount = analytics.logs.length;
+  const averageProtein = logCount > 0 ? analytics.macroTotals.protein / logCount : 0;
+  const averageCarbs = logCount > 0 ? analytics.macroTotals.carbs / logCount : 0;
+  const averageFats = logCount > 0 ? analytics.macroTotals.fats / logCount : 0;
 
   return (
     <SafeAreaView className="flex-1 bg-canvas" edges={['top']}>
       <FlatList
         data={analytics.logs}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 36 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
         ListHeaderComponent={
           <ScreenTransition className="px-5 pb-6 pt-2">
             <View className="flex-row items-center justify-between">
@@ -106,106 +75,82 @@ export default function TimelineScreen() {
             </View>
 
             <View className="mt-4 gap-4">
-              <BarChartCard
-                title="Progresion calorica"
-                subtitle={`Consumo diario del ${range === 'week' ? 'rango semanal' : 'rango mensual'}. El objetivo se mantiene en ${MOCK_DAILY_BUDGET} kcal.`}
-                points={analytics.calorieSeries}
-                target={MOCK_DAILY_BUDGET}
-                footer={`${analytics.averageCalories} kcal de media al dia - ${analytics.adherence}% de adherencia al objetivo`}
-              />
+              {isInitialLoading ? (
+                <AnalyticsOverviewSkeleton />
+              ) : (
+                <>
+                  <BarChartCard
+                    className="px-1"
+                    title="Progresion calorica"
+                    subtitle={`Consumo diario del ${range === 'week' ? 'rango semanal' : 'rango mensual'}. El objetivo se mantiene en 2200 kcal.`}
+                    points={analytics.calorieSeries}
+                    target={2200}
+                    footer={`${analytics.averageCalories} kcal de media al dia - ${analytics.adherence}% de adherencia al objetivo`}
+                  />
 
-              <GlassPanel className="px-5 py-5">
-                <Text className="font-sans-bold text-xl text-primary">Resumen rapido</Text>
-                <View className="mt-5 flex-row flex-wrap gap-3">
-                  <View className="min-w-[31%] flex-1 rounded-[22px] border border-border bg-forest-panelAlt px-4 py-4">
-                    <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-secondary">Media kcal</Text>
-                    <Text className="mt-2 font-sans-bold text-[28px] text-primary">{analytics.averageCalories}</Text>
+                  <View className="px-1 py-1">
+                    <Text className="font-sans-bold text-xl text-primary">Resumen rapido</Text>
+                    <View className="mt-5 gap-3">
+                      <View className="px-1 py-1">
+                        <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-secondary">Media kcal</Text>
+                        <Text className="mt-2 font-sans-bold text-[28px] text-primary">{analytics.averageCalories}</Text>
+                      </View>
+                      <View className="h-px bg-border" />
+                      <View className="px-1 py-1">
+                        <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-secondary">Comidas registradas</Text>
+                        <Text className="mt-2 font-sans-bold text-[28px] text-primary">{analytics.mealCount}</Text>
+                      </View>
+                      <View className="h-px bg-border" />
+                      <View className="px-1 py-1">
+                        <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-secondary">Mejor dia</Text>
+                        <Text className="mt-2 font-sans-bold text-[28px] text-primary">
+                          {new Date(`${analytics.bestDay.date}T12:00:00.000Z`).getUTCDate()}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                  <View className="min-w-[31%] flex-1 rounded-[22px] border border-border bg-forest-panelAlt px-4 py-4">
-                    <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-secondary">Comidas registradas</Text>
-                    <Text className="mt-2 font-sans-bold text-[28px] text-primary">{analytics.mealCount}</Text>
-                  </View>
-                  <View className="min-w-[31%] flex-1 rounded-[22px] border border-border bg-forest-panelAlt px-4 py-4">
-                    <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-secondary">Mejor dia</Text>
-                    <Text className="mt-2 font-sans-bold text-[28px] text-primary">
-                      {new Date(`${analytics.bestDay.date}T12:00:00.000Z`).getUTCDate()}
-                    </Text>
-                  </View>
-                </View>
-              </GlassPanel>
 
-              <MacroTrendCard
-                title="Balance de macros"
-                subtitle={`Consumo medio del ${range === 'week' ? 'rango semanal' : 'rango mensual'}.`}
-                metrics={[
-                  {
-                    label: 'Proteina',
-                    value: `${(analytics.macroTotals.protein / analytics.logs.length).toFixed(1)} g/dia`,
-                    progress: (analytics.macroTotals.protein / analytics.logs.length / 150) * 100,
-                    tone: 'text-protein',
-                    fill: '#EC5B13',
-                  },
-                  {
-                    label: 'Carbohidratos',
-                    value: `${(analytics.macroTotals.carbs / analytics.logs.length).toFixed(1)} g/dia`,
-                    progress: (analytics.macroTotals.carbs / analytics.logs.length / 220) * 100,
-                    tone: 'text-carbs',
-                    fill: '#60A5FA',
-                  },
-                  {
-                    label: 'Grasas',
-                    value: `${(analytics.macroTotals.fats / analytics.logs.length).toFixed(1)} g/dia`,
-                    progress: (analytics.macroTotals.fats / analytics.logs.length / 70) * 100,
-                    tone: 'text-fat',
-                    fill: '#FBBF24',
-                  },
-                ]}
-              />
+                  <MacroTrendCard
+                    className="px-1"
+                    title="Balance de macros"
+                    subtitle={`Consumo medio del ${range === 'week' ? 'rango semanal' : 'rango mensual'}.`}
+                    metrics={[
+                      {
+                        label: 'Proteina',
+                        value: `${averageProtein.toFixed(1)} g/dia`,
+                        progress: (averageProtein / 150) * 100,
+                        tone: 'text-protein',
+                        fill: '#EC5B13',
+                      },
+                      {
+                        label: 'Carbohidratos',
+                        value: `${averageCarbs.toFixed(1)} g/dia`,
+                        progress: (averageCarbs / 220) * 100,
+                        tone: 'text-carbs',
+                        fill: '#60A5FA',
+                      },
+                      {
+                        label: 'Grasas',
+                        value: `${averageFats.toFixed(1)} g/dia`,
+                        progress: (averageFats / 70) * 100,
+                        tone: 'text-fat',
+                        fill: '#FBBF24',
+                      },
+                    ]}
+                  />
+                </>
+              )}
             </View>
 
-            <View className="mt-10 flex-row items-center gap-2">
-              <Scale size={18} color="#A7F3D0" strokeWidth={2} />
-              <Text className="font-sans-bold text-xl text-primary">Seguimiento del peso</Text>
-            </View>
+            
 
-            <View className="mt-4 gap-4">
-              <LineChartCard
-                title="Peso corporal"
-                subtitle={`Tendencia del ${range === 'week' ? 'rango semanal' : 'rango mensual'}.`}
-                points={analytics.weightSeries}
-                footer={`${analytics.firstWeight.toFixed(1)} kg -> ${analytics.currentWeight.toFixed(1)} kg - ${analytics.delta > 0 ? '+' : ''}${analytics.delta.toFixed(1)} kg netos`}
-              />
-
-              <GlassPanel className="px-5 py-5">
-                <View className="flex-row flex-wrap gap-3">
-                  <View className="min-w-[31%] flex-1 rounded-[22px] border border-border bg-forest-panelAlt px-4 py-4">
-                    <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-secondary">Inicio</Text>
-                    <Text className="mt-2 font-sans-bold text-[28px] text-primary">{analytics.firstWeight.toFixed(1)}</Text>
-                    <Text className="font-sans text-xs text-secondary">kg</Text>
-                  </View>
-                  <View className="min-w-[31%] flex-1 rounded-[22px] border border-border bg-forest-panelAlt px-4 py-4">
-                    <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-secondary">Actual</Text>
-                    <Text className="mt-2 font-sans-bold text-[28px] text-primary">{analytics.currentWeight.toFixed(1)}</Text>
-                    <Text className="font-sans text-xs text-secondary">kg</Text>
-                  </View>
-                  <View className="min-w-[31%] flex-1 rounded-[22px] border border-border bg-forest-panelAlt px-4 py-4">
-                    <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-secondary">Cambio neto</Text>
-                    <Text className={`mt-2 font-sans-bold text-[28px] ${analytics.delta <= 0 ? 'text-accent-green' : 'text-brand'}`}>
-                      {analytics.delta > 0 ? '+' : ''}
-                      {analytics.delta.toFixed(1)}
-                    </Text>
-                    <Text className="font-sans text-xs text-secondary">kg</Text>
-                  </View>
-                </View>
-              </GlassPanel>
-            </View>
 
             <View className="mt-10 flex-row items-center gap-2">
               <CalendarDays size={18} color="#60A5FA" strokeWidth={2} />
               <Text className="font-sans-bold text-xl text-primary">Registros e historial</Text>
             </View>
 
-            <GlassPanel className="mt-4 px-5 py-5">
+            <View className="mt-4 px-1">
               <Text className="font-sans-bold text-xl text-primary">Registros mensuales</Text>
               <Text className="mt-2 font-sans text-sm leading-5 text-secondary">
                 Abre el calendario mensual para ver los dias registrados, sus totales y como ha ido evolucionando todo.
@@ -218,7 +163,7 @@ export default function TimelineScreen() {
                   </Text>
                 </Pressable>
               </Link>
-            </GlassPanel>
+            </View>
           </ScreenTransition>
         }
         renderItem={({ item, index }) => (
@@ -249,6 +194,26 @@ export default function TimelineScreen() {
             </GlassPanel>
           </ScreenTransition>
         )}
+        ListEmptyComponent={
+          isInitialLoading ? (
+            <View className="px-5 pt-4">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <ScreenTransition key={index} delay={50 + index * 20} className={index === 0 ? '' : 'mt-3'}>
+                  <MealLogCardSkeleton />
+                </ScreenTransition>
+              ))}
+            </View>
+          ) : analytics.logs.length === 0 ? (
+            <View className="px-5 pt-4">
+              <GlassPanel className="px-5 py-5">
+                <Text className="font-sans-medium text-base text-primary">Aun no hay historial en este rango</Text>
+                <Text className="mt-2 font-sans text-sm leading-6 text-secondary">
+                  Cambia el periodo o registra nuevas comidas para empezar a ver estadisticas aqui.
+                </Text>
+              </GlassPanel>
+            </View>
+          ) : null
+        }
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>

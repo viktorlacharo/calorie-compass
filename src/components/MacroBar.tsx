@@ -49,7 +49,7 @@ export function MacroBar({ macros, className }: MacroBarProps) {
           Prote {proteinPct}%
         </Text>
         <Text className="font-sans text-[11px] uppercase tracking-[1px] text-carbs">
-          Hidr. {carbsPct}%
+          Carbs. {carbsPct}%
         </Text>
         <Text className="font-sans text-[11px] uppercase tracking-[1px] text-fat">
           Grasas {fatsPct}%

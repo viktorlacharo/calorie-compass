@@ -30,6 +30,16 @@
     "experiments": {
       "typedRoutes": true
     },
-    "plugins": ["expo-router", "expo-font"]
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Permite usar la camara para fotografiar platos y etiquetas nutricionales.",
+          "photosPermission": "Permite acceder a tus fotos para reutilizar imagenes nutricionales cuando haga falta."
+        }
+      ]
+    ]
   }
 }

@@ -14,6 +14,7 @@ module.exports = {
         secondary: "#A9B8A8",
         border: "#243723",
         foreground: "#F5F7F2",
+        icon: "#F5F7F2",
         "muted-foreground": "#7C8B7C",
         ring: "#EC5B13",
         brand: {

@@ -1,6 +1,5 @@
 import { Text, View } from 'react-native';
 import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
-import { GlassPanel } from '@/components/GlassPanel';
 import { cn } from '@/lib/utils';
 
 type SeriesPoint = {
@@ -59,7 +58,7 @@ export function BarChartCard({
   const max = Math.max(...points.map((point) => point.value), target ?? 0);
 
   return (
-    <GlassPanel className={cn('px-5 py-5', className)}>
+    <View className={cn(className)}>
       <Text className="font-sans-bold text-xl text-primary">{title}</Text>
       <Text className="mt-1 font-sans text-sm text-secondary">{subtitle}</Text>
 
@@ -94,7 +93,7 @@ export function BarChartCard({
       </View>
 
       {footer ? <Text className="mt-5 font-sans text-xs text-secondary">{footer}</Text> : null}
-    </GlassPanel>
+    </View>
   );
 }
 
@@ -105,7 +104,7 @@ export function MacroTrendCard({
   className,
 }: MacroTrendCardProps) {
   return (
-    <GlassPanel className={cn('px-5 py-5', className)}>
+    <View className={cn(className)}>
       <Text className="font-sans-bold text-xl text-primary">{title}</Text>
       <Text className="mt-1 font-sans text-sm text-secondary">{subtitle}</Text>
 
@@ -126,7 +125,7 @@ export function MacroTrendCard({
           );
         })}
       </View>
-    </GlassPanel>
+    </View>
   );
 }
 
@@ -158,7 +157,7 @@ export function LineChartCard({
     .join(' ');
 
   return (
-    <GlassPanel className={cn('px-5 py-5', className)}>
+    <View className={cn(className)}>
       <Text className="font-sans-bold text-xl text-primary">{title}</Text>
       <Text className="mt-1 font-sans text-sm text-secondary">{subtitle}</Text>
 
@@ -188,6 +187,6 @@ export function LineChartCard({
       </View>
 
       {footer ? <Text className="mt-5 font-sans text-xs text-secondary">{footer}</Text> : null}
-    </GlassPanel>
+    </View>
   );
 }

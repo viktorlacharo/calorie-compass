@@ -1,46 +1,54 @@
-import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, PencilLine, Trash2 } from 'lucide-react-native';
 import { NutritionGrid } from '@/components/NutritionGrid';
 import { MacroBar } from '@/components/MacroBar';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { FoodDetailSkeleton } from '@/components/QuerySkeletons';
 import { Text as UIText } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
-import { GlassPanel } from '@/components/GlassPanel';
 import { ScreenTransition } from '@/components/ScreenTransition';
-import { calculatePerServing } from '@/utils/calculatePerServing';
-import { mockFoods } from '@/mocks/nutrition';
+import { getSupermarketMeta } from '@/constants/supermarkets';
+import { mockFavoriteDishes } from '@/mocks/nutrition';
+import { useDeleteFoodMutation } from '@/features/foods/queries/use-food-mutations';
+import { useFoodQuery } from '@/features/foods/queries/use-foods-query';
 
 export default function FoodDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-
-  const food = mockFoods.find((f) => f.id === id);
+  const deleteFoodMutation = useDeleteFoodMutation();
+  const { data: food, isLoading } = useFoodQuery(id);
 
   if (!food) {
     return (
       <SafeAreaView className="flex-1 bg-canvas" edges={['top']}>
-        <View className="flex-row items-center border-b border-border bg-surface px-4 py-3">
-          <Pressable
-            onPress={() => router.back()}
-            className="mr-3 h-9 w-9 items-center justify-center rounded-sm active:bg-canvas"
-            accessibilityRole="button"
-            accessibilityLabel="Volver atras"
-          >
-            <ArrowLeft size={18} color="#0C0A09" strokeWidth={1.6} />
-          </Pressable>
-        </View>
-        <View className="flex-1 items-center justify-center px-5">
-          <Text className="font-sans-medium text-sm text-secondary">No se ha encontrado el alimento</Text>
-        </View>
+        {isLoading ? (
+          <FoodDetailSkeleton />
+        ) : (
+          <>
+            <View className="flex-row items-center border-b border-border bg-surface px-4 py-3">
+              <Pressable
+                onPress={() => router.back()}
+                className="mr-3 h-9 w-9 items-center justify-center rounded-sm active:bg-canvas"
+                accessibilityRole="button"
+                accessibilityLabel="Volver atras"
+              >
+                <ArrowLeft size={18} color="#F5F7F2" strokeWidth={1.6} />
+              </Pressable>
+            </View>
+            <View className="flex-1 items-center justify-center px-5">
+              <Text className="font-sans-medium text-sm text-secondary">No se ha encontrado el alimento</Text>
+            </View>
+          </>
+        )}
       </SafeAreaView>
     );
   }
 
   const currentFood = food;
-  const perServing = calculatePerServing(currentFood.per100g, currentFood.servingSize);
+  const supermarket = getSupermarketMeta(currentFood.supermarket);
 
   const createdDate = new Intl.DateTimeFormat('es-ES', {
     year: 'numeric',
@@ -48,19 +56,24 @@ export default function FoodDetailScreen() {
     day: 'numeric',
   }).format(new Date(currentFood.createdAt));
 
-  function handleDelete() {
-    Alert.alert(
-      'Borrar alimento',
-      `Seguro que quieres borrar "${currentFood.name}"? Esto no se puede deshacer.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Borrar alimento',
-          style: 'destructive',
-          onPress: () => router.back(),
-        },
-      ]
-    );
+  async function handleDelete() {
+    const usages = mockFavoriteDishes.filter((dish) => dish.items.some((item) => item.foodId === currentFood.id)).length;
+
+    if (usages > 0) {
+      Alert.alert('No se puede borrar', `"${currentFood.name}" se usa en ${usages} ${usages === 1 ? 'receta' : 'recetas'}. Quita primero esas referencias.`);
+      return;
+    }
+
+    const result = await deleteFoodMutation.mutateAsync(currentFood.id);
+
+    if (result.status === 'blocked') {
+      Alert.alert('No se puede borrar', `Este alimento sigue usado en ${result.recipeCount} recetas.`);
+      return;
+    }
+
+    Alert.alert('Borrado preparado', `"${currentFood.name}" quedaria eliminado cuando conectemos el backend mock.`, [
+      { text: 'Vale', onPress: () => router.replace('/(tabs)/foods') },
+    ]);
   }
 
   return (
@@ -73,7 +86,7 @@ export default function FoodDetailScreen() {
             accessibilityRole="button"
             accessibilityLabel="Volver atras"
           >
-            <ArrowLeft size={18} color="#0C0A09" strokeWidth={1.6} />
+            <ArrowLeft size={18} color="#F5F7F2" strokeWidth={1.6} />
           </Pressable>
           <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
             DETALLE DEL ALIMENTO
@@ -90,62 +103,46 @@ export default function FoodDetailScreen() {
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        <ScreenTransition variant="right" className="px-5 pt-5">
+        <ScreenTransition className="px-5 pt-5">
           <Text className="font-sans-bold text-lg text-primary">{currentFood.name}</Text>
-          <View className="mt-1.5 flex-row items-center gap-2">
+          <View className="mt-3 flex-row flex-wrap items-center gap-2">
             <Badge variant="secondary">
               <UIText className="text-[9px]">
                 {currentFood.servingSize}
                 {currentFood.servingUnit}
               </UIText>
             </Badge>
+            {supermarket ? (
+              <View className="flex-row items-center gap-2 rounded-full border border-border bg-forest-panelAlt px-3 py-1.5">
+                <View className="h-5 w-5 items-center justify-center rounded-full bg-white/90">
+                  <Image source={supermarket.logo} className="h-3.5 w-3.5" resizeMode="contain" />
+                </View>
+                <Text className="font-sans text-[10px] uppercase tracking-[1.1px] text-secondary">
+                  {supermarket.label}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+
+          <View className="mt-1.5 flex-row items-center gap-2">
             <Text className="font-sans text-[10px] text-muted">Anadido el {createdDate}</Text>
           </View>
         </ScreenTransition>
 
         <Separator className="mx-5 my-4" />
 
-        <ScreenTransition variant="right" delay={40} className="px-5">
+        <ScreenTransition delay={40} className="px-5">
           <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
             POR 100{currentFood.servingUnit.toUpperCase()}
           </Text>
           <NutritionGrid macros={currentFood.per100g} size="md" className="mt-3" />
-          <MacroBar macros={currentFood.per100g} className="mt-3" />
-        </ScreenTransition>
-
-        <Separator className="mx-5 my-4" />
-
-        <ScreenTransition variant="right" delay={80} className="px-5">
-          <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-            POR RACION ({currentFood.servingSize}
-            {currentFood.servingUnit.toUpperCase()})
-          </Text>
-          <NutritionGrid macros={perServing} size="md" className="mt-3" />
-          <MacroBar macros={perServing} className="mt-3" />
-        </ScreenTransition>
-
-        <Separator className="mx-5 my-4" />
-
-        <ScreenTransition variant="right" delay={120} className="px-5">
-          <GlassPanel className="px-4 py-4">
-            <Text className="font-sans text-[11px] uppercase tracking-[1.5px] text-secondary">Resumen rapido</Text>
-            <View className="mt-4 flex-row gap-2">
-              <View className="rounded-full bg-protein/10 px-3 py-2">
-                <Text className="font-sans text-[11px] text-protein">P {perServing.protein}g</Text>
-              </View>
-              <View className="rounded-full bg-carbs/10 px-3 py-2">
-                <Text className="font-sans text-[11px] text-carbs">C {perServing.carbs}g</Text>
-              </View>
-              <View className="rounded-full bg-fat/10 px-3 py-2">
-                <Text className="font-sans text-[11px] text-fat">G {perServing.fats}g</Text>
-              </View>
-            </View>
-          </GlassPanel>
+          <MacroBar macros={currentFood.per100g} className="mt-8" />
         </ScreenTransition>
       </ScrollView>
 
       <View className="border-t border-border bg-surface px-5 py-4">
-        <Button variant="outline" accessibilityLabel="Editar alimento" onPress={() => {}}>
+        <Button variant="outline" accessibilityLabel="Editar alimento" onPress={() => router.push({ pathname: '/food/edit/[id]', params: { id: currentFood.id } })}>
+          <PencilLine size={16} color="#F5F7F2" strokeWidth={2} />
           <UIText>Editar alimento</UIText>
         </Button>
       </View>
