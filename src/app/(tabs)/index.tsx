@@ -9,6 +9,8 @@ import { NutriScore } from '@/components/NutriScore';
 import { NutritionGrid } from '@/components/NutritionGrid';
 import { CalorieBudgetSkeleton, DashboardInsightSkeleton, MealLogCardSkeleton, NutritionGridSkeleton, SkeletonBlock } from '@/components/QuerySkeletons';
 import { ScreenTransition } from '@/components/ScreenTransition';
+import { useAuth } from '@/features/auth/context/AuthProvider';
+import { getUserDisplayName, getUserInitials } from '@/features/auth/utils/user-profile';
 import { useDashboardQuery } from '@/features/logs/queries/use-logs-query';
 import { calculateNutritionScore } from '@/utils/calculateNutritionScore';
 
@@ -23,6 +25,11 @@ export default function DailyLogScreen() {
   const nutritionScore = calculateNutritionScore(totals);
   const remainingCalories = data?.remainingCalories ?? Math.max(0, budget - totals.calories);
   const remainingProtein = data?.remainingProtein ?? Math.max(0, 165 - totals.protein);
+  const { user, session } = useAuth();
+  const displayName = getUserDisplayName(user);
+  const userInitials = getUserInitials(user);
+
+ console.log('Dashboard data:', session); 
 
   const dateLabel = new Intl.DateTimeFormat('es-ES', {
     weekday: 'long',
@@ -40,7 +47,7 @@ export default function DailyLogScreen() {
           <ScreenTransition className="px-5 pb-6 pt-2">
             <View className="flex-row items-center justify-between">
               <View>
-                <Text className="font-sans text-sm text-secondary">Hola, Viktor</Text>
+                <Text className="font-sans text-sm text-secondary">Hola, {displayName}</Text>
                 <Text className="mt-1 font-sans-bold text-[31px] leading-[34px] text-primary">
                   Inicio
                 </Text>
@@ -51,7 +58,7 @@ export default function DailyLogScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="Abrir ajustes"
                 >
-                  <Text className="font-sans-bold text-base uppercase text-primary">VL</Text>
+                  <Text className="font-sans-bold text-base uppercase text-primary">{userInitials}</Text>
                 </Pressable>
               </Link>
             </View>

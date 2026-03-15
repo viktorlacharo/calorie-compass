@@ -9,6 +9,27 @@ type HttpRequestOptions = {
   timeout?: number;
 };
 
+let authToken: string | null = null;
+const axiosClient = axios.create();
+
+axiosClient.interceptors.request.use((config) => {
+  if (authToken) {
+    config.headers.set('Authorization', `Bearer ${authToken}`);
+  } else {
+    config.headers.delete('Authorization');
+  }
+
+  return config;
+});
+
+export function setHttpAuthToken(token: string | null) {
+  authToken = token;
+}
+
+export function clearHttpAuthToken() {
+  authToken = null;
+}
+
 export async function httpRequest<TResponse>(url: string, options: HttpRequestOptions = {}) {
   const config: AxiosRequestConfig = {
     url,
@@ -22,7 +43,7 @@ export async function httpRequest<TResponse>(url: string, options: HttpRequestOp
   };
 
   try {
-    const response = await axios.request<TResponse>(config);
+    const response = await axiosClient.request<TResponse>(config);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {

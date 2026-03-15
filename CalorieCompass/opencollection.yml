@@ -1,0 +1,26 @@
+opencollection: 1.0.0
+
+info:
+  name: CalorieCompass
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  auth:
+    type: bearer
+    token: eyJraWQiOiJGZkhGTFRJbDR0SDBwK2dzT0I0QU1nZVdKSFNFTEQ2REJHN1FjVituV1RvPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiI2ZDkwZjdlNC0yMDkxLTcwZGYtNDMzYi03ODQ4YjNhMmY5ZTkiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuZXUtc291dGgtMi5hbWF6b25hd3MuY29tXC9ldS1zb3V0aC0yX2JQUk1uMmFkOSIsImNsaWVudF9pZCI6IjFqb2lmb3ZhMzc2bmdwdXJqcGJoOGZoZ2JuIiwib3JpZ2luX2p0aSI6ImRiMGZiNzMwLWIyZGMtNGY2ZC04YjdlLWEyMzBkMDIzOGUzMSIsImV2ZW50X2lkIjoiM2ExN2Y5YzctYTgyZi00NTQ2LWIwODktMTFjODM5YWJiNjFkIiwidG9rZW5fdXNlIjoiYWNjZXNzIiwic2NvcGUiOiJhd3MuY29nbml0by5zaWduaW4udXNlci5hZG1pbiIsImF1dGhfdGltZSI6MTc3MzU2NjAzMywiZXhwIjoxNzczNTY5NjMzLCJpYXQiOjE3NzM1NjYwMzMsImp0aSI6ImIwODNlZjYwLWQ1YmQtNDJlOC05YzdiLWI1YjNiNGY1Y2QzOCIsInVzZXJuYW1lIjoidmlrdG9ybGFjaGFybyJ9.oYTwsTD1aFDg6C303MRsAxlogGeYkQRncYJECgAWT0krZucht0E0mIuyfB-wRme5mKIKjmRm-s02E43ihtrEXKuglm7_G-QYDI4FTm83GpEB_bUwOyf8M52hrTF_ILRXFThbnZWbowdxYncHDE7AvDbBVdfGrijr3LnA1D1db7S7DRxGP7C9_wsUJJZhftBtlDzl0m5irRziP1oPFq-18GeRRdThLbwDjQIrtSHPO1tUDo1EhCpnJIabD75IM5ATE4jQWtTuX7DxE1CMpY27Y2jatV-_uTau-AeqeB2lTlabTSa6AYwmszOVxVsRivbBZPcONYzxqBlzJlEoU7jMIg
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

@@ -1,9 +1,13 @@
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, ChevronRight, Globe, Scale, Target } from 'lucide-react-native';
+import { ArrowLeft, ChevronRight, Globe, LogOut, Scale, Target } from 'lucide-react-native';
 import { GlassPanel } from '@/components/GlassPanel';
 import { ScreenTransition } from '@/components/ScreenTransition';
+import { Button } from '@/components/ui/button';
+import { Text as UIText } from '@/components/ui/text';
+import { useAuth } from '@/features/auth/context/AuthProvider';
+import { getUserDisplayName, getUserInitials, getUserSessionLabel, getUserSessionMeta } from '@/features/auth/utils/user-profile';
 
 function SettingRow({
   title,
@@ -34,6 +38,11 @@ function SettingRow({
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { signOut, user } = useAuth();
+  const displayName = getUserDisplayName(user);
+  const sessionLabel = getUserSessionLabel(user);
+  const sessionMeta = getUserSessionMeta(user);
+  const initials = getUserInitials(user);
 
   return (
     <SafeAreaView className="flex-1 bg-canvas" edges={['top']}>
@@ -60,6 +69,20 @@ export default function SettingsScreen() {
         <Text className="mt-4 font-sans text-sm leading-6 text-secondary">
           Aqui podras centralizar tus preferencias personales, objetivos y formato de seguimiento.
         </Text>
+
+        <GlassPanel className="mt-6 px-4 py-4">
+          <View className="flex-row items-center gap-3">
+            <View className="h-12 w-12 items-center justify-center rounded-full border border-border bg-forest-panelAlt">
+              <Text className="font-sans-bold text-base uppercase text-primary">{initials}</Text>
+            </View>
+
+            <View className="flex-1">
+              <Text className="font-sans-medium text-base text-primary">{displayName}</Text>
+              <Text className="mt-1 font-sans text-sm text-secondary">{sessionLabel}</Text>
+              {sessionMeta ? <Text className="mt-1 font-sans text-xs text-muted">{sessionMeta}</Text> : null}
+            </View>
+          </View>
+        </GlassPanel>
       </ScreenTransition>
 
       <View className="mt-6 gap-3 px-5">
@@ -85,6 +108,21 @@ export default function SettingsScreen() {
             value="Espanol"
             icon={<Globe size={18} color="#A7F3D0" strokeWidth={1.9} />}
           />
+        </ScreenTransition>
+
+        <ScreenTransition delay={160}>
+          <SettingRow
+            title="Sesion"
+            value={sessionLabel}
+            icon={<LogOut size={18} color="#F5F7F2" strokeWidth={1.9} />}
+          />
+        </ScreenTransition>
+
+        <ScreenTransition delay={200}>
+          <Button variant="outline" onPress={() => void signOut()} accessibilityLabel="Cerrar sesion">
+            <LogOut size={16} color="#F5F7F2" strokeWidth={2} />
+            <UIText>Cerrar sesion</UIText>
+          </Button>
         </ScreenTransition>
       </View>
     </SafeAreaView>

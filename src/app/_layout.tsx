@@ -1,4 +1,6 @@
 import "../../global.css";
+import 'react-native-get-random-values';
+import 'react-native-url-polyfill/auto';
 
 import { useFonts } from "expo-font";
 import {
@@ -11,11 +13,12 @@ import {
   DMSans_500Medium,
   DMSans_700Bold,
 } from "@expo-google-fonts/dm-sans";
-import { Stack } from "expo-router";
 import * as SystemUI from "expo-system-ui";
 import { StatusBar } from "expo-status-bar";
 import { View, Text, ActivityIndicator } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { AuthGate } from "@/features/auth/components/AuthGate";
+import { AuthProvider } from "@/features/auth/context/AuthProvider";
 import { QueryProvider } from "@/lib/react-query/QueryProvider";
 
 SystemUI.setBackgroundColorAsync("#07110A");
@@ -48,58 +51,10 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <QueryProvider>
-        <StatusBar style="light" />
-          <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: "#07110A" },
-            animation: "slide_from_right",
-            animationDuration: 220,
-          }}
-        >
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="food/add"
-            options={{ animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="food/scan"
-            options={{ animation: "slide_from_bottom" }}
-          />
-          <Stack.Screen
-            name="food/[id]"
-            options={{ animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="food/edit/[id]"
-            options={{ animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="favorite/create"
-            options={{ animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="favorite/[id]"
-            options={{ animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="log/analyze"
-            options={{ animation: "slide_from_bottom" }}
-          />
-          <Stack.Screen
-            name="ai/suggestions"
-            options={{ animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="history/calendar"
-            options={{ animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="settings"
-            options={{ animation: "slide_from_right" }}
-          />
-          <Stack.Screen name="+not-found" />
-        </Stack>
+        <AuthProvider>
+          <StatusBar style="light" />
+          <AuthGate />
+        </AuthProvider>
       </QueryProvider>
     </SafeAreaProvider>
   );
