@@ -1,0 +1,30 @@
+info:
+  name: Create Food
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: https://iaerxz52fj.execute-api.eu-south-2.amazonaws.com/foods
+  body:
+    type: json
+    data: |-
+      {
+         "name": "Pechuga de pollo",
+        "referenceMacros": {
+          "calories": 120,
+          "protein": 23,
+          "carbs": 0,
+          "fats": 2
+        },
+        
+        "defaultServingAmount": 150,
+        "supermarket": "mercadona"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

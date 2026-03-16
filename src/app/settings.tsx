@@ -79,7 +79,7 @@ export default function SettingsScreen() {
             <View className="flex-1">
               <Text className="font-sans-medium text-base text-primary">{displayName}</Text>
               <Text className="mt-1 font-sans text-sm text-secondary">{sessionLabel}</Text>
-              {sessionMeta ? <Text className="mt-1 font-sans text-xs text-muted">{sessionMeta}</Text> : null}
+              
             </View>
           </View>
         </GlassPanel>
@@ -110,13 +110,7 @@ export default function SettingsScreen() {
           />
         </ScreenTransition>
 
-        <ScreenTransition delay={160}>
-          <SettingRow
-            title="Sesion"
-            value={sessionLabel}
-            icon={<LogOut size={18} color="#F5F7F2" strokeWidth={1.9} />}
-          />
-        </ScreenTransition>
+        
 
         <ScreenTransition delay={200}>
           <Button variant="outline" onPress={() => void signOut()} accessibilityLabel="Cerrar sesion">
