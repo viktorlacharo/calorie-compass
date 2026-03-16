@@ -17,7 +17,10 @@ import { aiQueryKeys } from '@/features/ai/queries/ai.query-keys';
 import { useFoodsQuery } from '@/features/foods/queries/use-foods-query';
 import { useCreateFavoriteMutation } from '@/features/favorites/queries/use-favorite-mutations';
 import { useCreateMealLogEntryMutation } from '@/features/logs/queries/use-logs-query';
-import { calculatePerServing } from '@/utils/calculatePerServing';
+import {
+  calculateFoodServingMacros,
+  getFoodDefaultServingAmount,
+} from '@/utils/foodMeasurements';
 import { sumMacros } from '@/utils/sumMacros';
 import type { AiRecipeDraft, Food, MacroNutrients, Supermarket } from '@/types/nutrition';
 
@@ -106,7 +109,7 @@ export default function CreateFavoriteScreen() {
   }, [aiRecipeDraft, foods, hydratedDraftId]);
 
   const totalMacros: MacroNutrients = useMemo(() => {
-    const macrosList = items.map((item) => calculatePerServing(item.food.per100g, item.quantity));
+    const macrosList = items.map((item) => calculateFoodServingMacros(item.food, item.quantity));
     return sumMacros(macrosList);
   }, [items]);
 
@@ -123,7 +126,7 @@ export default function CreateFavoriteScreen() {
   const canSave = name.trim().length > 0 && items.length > 0 && unresolvedIngredients.length === 0;
 
   function addFood(food: Food) {
-    setItems((prev) => [...prev, { food, quantity: food.servingSize }]);
+    setItems((prev) => [...prev, { food, quantity: getFoodDefaultServingAmount(food) }]);
     setShowFoodPicker(false);
   }
 
@@ -152,7 +155,6 @@ export default function CreateFavoriteScreen() {
       items: items.map((item) => ({
         foodId: item.food.id,
         quantity: item.quantity,
-        unit: item.food.servingUnit,
       })),
     });
 
@@ -242,9 +244,9 @@ export default function CreateFavoriteScreen() {
                   const food = foods.find((entry) => entry.id === ingredient.foodId);
 
                   return (
-                    <View key={`${ingredient.foodId}-${ingredient.quantity}-${ingredient.unit}`} className="rounded-full border border-forest-line bg-surface px-3 py-2">
+                    <View key={`${ingredient.foodId}-${ingredient.quantity}`} className="rounded-full border border-forest-line bg-surface px-3 py-2">
                       <Text className="font-sans text-xs text-primary">
-                        {food?.name ?? ingredient.foodId} · {ingredient.quantity} {ingredient.unit}
+                        {food?.name ?? ingredient.foodId} · {ingredient.quantity} g
                       </Text>
                     </View>
                   );
@@ -465,7 +467,7 @@ export default function CreateFavoriteScreen() {
                           inputMode="decimal"
                           accessibilityLabel={`Cantidad para ${item.food.name}`}
                         />
-                        <Text className="font-sans text-xs text-secondary">{item.food.servingUnit}</Text>
+                        <Text className="font-sans text-xs text-secondary">g</Text>
                       </View>
                     </View>
                     <Pressable

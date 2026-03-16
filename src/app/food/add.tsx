@@ -5,22 +5,24 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { useCreateFoodMutation } from '@/features/foods/queries/use-food-mutations';
 import { FoodForm } from '@/features/foods/ui/FoodForm';
-import { calculatePerServing } from '@/utils/calculatePerServing';
+import { calculateServingMacros } from '@/utils/calculatePerServing';
 import type { MacroNutrients, Supermarket } from '@/types/nutrition';
+
+const FOOD_REFERENCE_AMOUNT = 100;
 
 export default function AddFoodScreen() {
   const router = useRouter();
   const createFoodMutation = useCreateFoodMutation();
 
   const [name, setName] = useState('');
-  const [servingSize, setServingSize] = useState('100');
+  const [defaultServingAmount, setDefaultServingAmount] = useState('');
   const [calories, setCalories] = useState('');
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');
   const [fats, setFats] = useState('');
   const [supermarket, setSupermarket] = useState<Supermarket | null>(null);
 
-  const per100g: MacroNutrients = useMemo(
+  const referenceMacros: MacroNutrients = useMemo(
     () => ({
       calories: Number(calories) || 0,
       protein: Number(protein) || 0,
@@ -30,16 +32,21 @@ export default function AddFoodScreen() {
     [calories, protein, carbs, fats]
   );
 
-  const preview = useMemo(() => calculatePerServing(per100g, Number(servingSize) || 0), [per100g, servingSize]);
-  const canSave = name.trim().length > 0 && Number(calories) > 0 && Number(servingSize) > 0;
+  const resolvedDefaultServingAmount = Number(defaultServingAmount) || FOOD_REFERENCE_AMOUNT;
+
+  const preview = useMemo(
+    () => calculateServingMacros(referenceMacros, FOOD_REFERENCE_AMOUNT, resolvedDefaultServingAmount),
+    [referenceMacros, resolvedDefaultServingAmount]
+  );
+  const canSave = name.trim().length > 0 && Number(calories) > 0;
 
   async function handleSave() {
     const createdFood = await createFoodMutation.mutateAsync({
       name,
-      servingSize: Number(servingSize) || 100,
-      servingUnit: 'g',
+      referenceAmount: FOOD_REFERENCE_AMOUNT,
+      referenceMacros,
+      defaultServingAmount: defaultServingAmount.trim().length > 0 ? resolvedDefaultServingAmount : undefined,
       supermarket,
-      per100g,
     });
 
     Alert.alert('Alimento preparado', `${name} ya esta listo para conectarse al backend mock.`, [
@@ -69,13 +76,14 @@ export default function AddFoodScreen() {
         title="Nuevo alimento"
         subtitle="Crea una entrada precisa y reutilizable"
         ctaLabel="Guardar alimento"
-        values={{ name, servingSize, calories, protein, carbs, fats, supermarket }}
-        per100g={per100g}
+        values={{ name, defaultServingAmount, calories, protein, carbs, fats, supermarket }}
+        referenceAmount={FOOD_REFERENCE_AMOUNT}
         preview={preview}
+        previewTitle={`Vista previa - racion de ${resolvedDefaultServingAmount}g`}
         canSave={canSave}
         onChange={(field, value) => {
           if (field === 'name') setName(String(value));
-          if (field === 'servingSize') setServingSize(String(value));
+          if (field === 'defaultServingAmount') setDefaultServingAmount(String(value));
           if (field === 'calories') setCalories(String(value));
           if (field === 'protein') setProtein(String(value));
           if (field === 'carbs') setCarbs(String(value));

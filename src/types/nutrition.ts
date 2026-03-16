@@ -11,17 +11,16 @@ export type Food = {
   id: string;
   userId: string;
   name: string;
-  servingUnit: 'g' | 'ml' | 'unit';
-  servingSize: number;
+  referenceAmount: number;
+  referenceMacros: MacroNutrients;
+  defaultServingAmount?: number;
   supermarket?: Supermarket;
-  per100g: MacroNutrients;
   createdAt: string;
 };
 
 export type FavoriteDishItem = {
   foodId: string;
   quantity: number;
-  unit: 'g' | 'ml' | 'unit';
 };
 
 export type FavoriteDish = {
@@ -68,16 +67,15 @@ export type WeightEntry = {
 
 export type NutritionLabelScanResult = {
   detectedName: string;
-  servingSize: number;
-  servingUnit: 'g' | 'ml' | 'unit';
-  macrosPerServing: MacroNutrients;
+  referenceAmount: number;
+  referenceMacros: MacroNutrients;
+  defaultServingAmount?: number;
   confidence: number;
 };
 
 export type VisualAnalysisItem = {
   detectedFoodName: string;
   estimatedQuantity: number;
-  estimatedUnit: 'g' | 'ml' | 'unit';
   matchedFoodId?: string;
   estimatedMacros: MacroNutrients;
   confidence: number;

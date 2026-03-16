@@ -1,8 +1,11 @@
 import { mockNutritionLabelScan, mockVisualAnalysis } from '@/mocks/nutrition';
 import { AI_DAILY_BUDGET, AI_DAILY_MACRO_TARGET } from '@/features/ai/config/ai.constants';
 import { simulateFoodsRequest } from '@/features/foods/services/foods.mock-service';
-import { calculatePerServing } from '@/utils/calculatePerServing';
 import { sumMacros } from '@/utils/sumMacros';
+import {
+  calculateFoodServingMacros,
+  getFoodDefaultServingAmount,
+} from '@/utils/foodMeasurements';
 import type {
   AiSuggestionRequest,
   AiSuggestionResponse,
@@ -39,10 +42,14 @@ function scoreSuggestion(macros: MealSuggestion['estimatedMacros'], request: Mea
 }
 
 function buildFoodsOnlySuggestions(foods: Food[], request: MealSuggestionRequest): MealSuggestion[] {
-  const proteins = foods.filter((food) => food.per100g.protein >= 10);
-  const carbs = foods.filter((food) => food.per100g.carbs >= 10);
-  const vegetables = foods.filter((food) => food.per100g.calories <= 50 && food.per100g.carbs <= 10);
-  const fats = foods.filter((food) => food.per100g.fats >= 30 || food.name.toLowerCase().includes('aceite'));
+  const proteins = foods.filter((food) => food.referenceMacros.protein >= 10);
+  const carbs = foods.filter((food) => food.referenceMacros.carbs >= 10);
+  const vegetables = foods.filter(
+    (food) => food.referenceMacros.calories <= 50 && food.referenceMacros.carbs <= 10
+  );
+  const fats = foods.filter(
+    (food) => food.referenceMacros.fats >= 30 || food.name.toLowerCase().includes('aceite')
+  );
 
   const suggestions: MealSuggestion[] = [];
 
@@ -52,16 +59,25 @@ function buildFoodsOnlySuggestions(foods: Food[], request: MealSuggestionRequest
     const fat = fats.find((food) => ![protein.id, carb?.id, vegetable?.id].includes(food.id));
 
     const items: FavoriteDishItem[] = [
-      { foodId: protein.id, quantity: protein.servingSize, unit: protein.servingUnit },
-      ...(carb ? [{ foodId: carb.id, quantity: carb.servingSize, unit: carb.servingUnit }] : []),
-      ...(vegetable ? [{ foodId: vegetable.id, quantity: vegetable.servingSize, unit: vegetable.servingUnit }] : []),
-      ...(fat ? [{ foodId: fat.id, quantity: fat.servingSize, unit: fat.servingUnit }] : []),
+      { foodId: protein.id, quantity: getFoodDefaultServingAmount(protein) },
+      ...(carb
+        ? [{ foodId: carb.id, quantity: getFoodDefaultServingAmount(carb) }]
+        : []),
+      ...(vegetable
+        ? [
+            {
+              foodId: vegetable.id,
+              quantity: getFoodDefaultServingAmount(vegetable),
+            },
+          ]
+        : []),
+      ...(fat ? [{ foodId: fat.id, quantity: getFoodDefaultServingAmount(fat) }] : []),
     ];
 
     const estimatedMacros = sumMacros(
       items.map((item) => {
         const food = foods.find((entry) => entry.id === item.foodId);
-        return food ? calculatePerServing(food.per100g, item.quantity) : { calories: 0, protein: 0, carbs: 0, fats: 0 };
+        return food ? calculateFoodServingMacros(food, item.quantity) : { calories: 0, protein: 0, carbs: 0, fats: 0 };
       })
     );
 
@@ -88,13 +104,13 @@ function buildFavoriteAdaptations(favorites: FavoriteDish[], foods: Food[]): Mea
   return favorites.slice(0, 3).map((favorite) => {
     const scaledItems = favorite.items.map((item) => ({
       ...item,
-      quantity: Math.max(1, Number((item.quantity * 0.8).toFixed(item.unit === 'unit' ? 0 : 1))),
+      quantity: Math.max(1, Number((item.quantity * 0.8).toFixed(1))),
     }));
 
     const estimatedMacros = sumMacros(
       scaledItems.map((item) => {
         const food = foods.find((entry) => entry.id === item.foodId);
-        return food ? calculatePerServing(food.per100g, item.quantity) : { calories: 0, protein: 0, carbs: 0, fats: 0 };
+        return food ? calculateFoodServingMacros(food, item.quantity) : { calories: 0, protein: 0, carbs: 0, fats: 0 };
       })
     );
 
@@ -257,7 +273,7 @@ export async function analyzeMealImage(input: AnalyzeMealImageRequest): Promise<
         return {
           ...item,
           detectedFoodName: matchedFood.name,
-          estimatedMacros: calculatePerServing(matchedFood.per100g, item.estimatedQuantity),
+          estimatedMacros: calculateFoodServingMacros(matchedFood, item.estimatedQuantity),
         };
       })
       .filter((item): item is VisualAnalysisResult['items'][number] => Boolean(item));

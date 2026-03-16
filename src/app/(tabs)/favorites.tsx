@@ -7,17 +7,17 @@ import { FavoriteDishCardSkeleton, SkeletonBlock } from '@/components/QuerySkele
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { useFoodsQuery } from '@/features/foods/queries/use-foods-query';
 import { useFavoritesQuery } from '@/features/favorites/queries/use-favorites-query';
-import { calculatePerServing } from '@/utils/calculatePerServing';
+import { calculateFoodServingMacros } from '@/utils/foodMeasurements';
 import { sumMacros } from '@/utils/sumMacros';
-import type { Food, MacroNutrients } from '@/types/nutrition';
+import type { FavoriteDishItem, Food, MacroNutrients } from '@/types/nutrition';
 
-function getDishTotals(dishItems: { foodId: string; quantity: number; unit: string }[], foods: Food[]) {
+function getDishTotals(dishItems: FavoriteDishItem[], foods: Food[]) {
   const macrosList: MacroNutrients[] = [];
 
   for (const item of dishItems) {
     const food = foods.find((entry) => entry.id === item.foodId);
     if (food) {
-      macrosList.push(calculatePerServing(food.per100g, item.quantity));
+      macrosList.push(calculateFoodServingMacros(food, item.quantity));
     }
   }
 

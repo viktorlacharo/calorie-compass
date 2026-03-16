@@ -1,12 +1,25 @@
 import type { MacroNutrients } from '../types/nutrition';
 
-export function calculatePerServing(per100g: MacroNutrients, grams: number): MacroNutrients {
-  const factor = grams / 100;
+export function calculateServingMacros(
+  referenceMacros: MacroNutrients,
+  referenceAmount: number,
+  servingAmount: number
+): MacroNutrients {
+  if (referenceAmount <= 0 || servingAmount <= 0) {
+    return {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fats: 0,
+    };
+  }
+
+  const factor = servingAmount / referenceAmount;
 
   return {
-    calories: Math.round(per100g.calories * factor),
-    protein: Number((per100g.protein * factor).toFixed(1)),
-    carbs: Number((per100g.carbs * factor).toFixed(1)),
-    fats: Number((per100g.fats * factor).toFixed(1)),
+    calories: Math.round(referenceMacros.calories * factor),
+    protein: Number((referenceMacros.protein * factor).toFixed(1)),
+    carbs: Number((referenceMacros.carbs * factor).toFixed(1)),
+    fats: Number((referenceMacros.fats * factor).toFixed(1)),
   };
 }

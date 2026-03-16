@@ -14,6 +14,10 @@ import { getSupermarketMeta } from '@/constants/supermarkets';
 import { mockFavoriteDishes } from '@/mocks/nutrition';
 import { useDeleteFoodMutation } from '@/features/foods/queries/use-food-mutations';
 import { useFoodQuery } from '@/features/foods/queries/use-foods-query';
+import {
+  calculateFoodDefaultServingMacros,
+  formatGramAmount,
+} from '@/utils/foodMeasurements';
 
 export default function FoodDetailScreen() {
   const router = useRouter();
@@ -49,6 +53,11 @@ export default function FoodDetailScreen() {
 
   const currentFood = food;
   const supermarket = getSupermarketMeta(currentFood.supermarket);
+  const defaultServingLabel = currentFood.defaultServingAmount
+    ? formatGramAmount(currentFood.defaultServingAmount)
+    : 'Sin racion por defecto';
+  const referenceLabel = formatGramAmount(currentFood.referenceAmount);
+  const defaultServingMacros = calculateFoodDefaultServingMacros(currentFood);
 
   const createdDate = new Intl.DateTimeFormat('es-ES', {
     year: 'numeric',
@@ -108,8 +117,7 @@ export default function FoodDetailScreen() {
           <View className="mt-3 flex-row flex-wrap items-center gap-2">
             <Badge variant="secondary">
               <UIText className="text-[9px]">
-                {currentFood.servingSize}
-                {currentFood.servingUnit}
+                {defaultServingLabel}
               </UIText>
             </Badge>
             {supermarket ? (
@@ -133,10 +141,21 @@ export default function FoodDetailScreen() {
 
         <ScreenTransition delay={40} className="px-5">
           <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-            POR 100{currentFood.servingUnit.toUpperCase()}
+            REFERENCIA NUTRICIONAL
           </Text>
-          <NutritionGrid macros={currentFood.per100g} size="md" className="mt-3" />
-          <MacroBar macros={currentFood.per100g} className="mt-8" />
+          <Text className="mt-2 font-sans text-sm text-secondary">Valores para {referenceLabel}</Text>
+          <NutritionGrid macros={currentFood.referenceMacros} size="md" className="mt-3" />
+          <MacroBar macros={currentFood.referenceMacros} className="mt-8" />
+        </ScreenTransition>
+
+        <ScreenTransition delay={70} className="mt-8 px-5">
+          <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">RACION POR DEFECTO</Text>
+          <Text className="mt-2 font-sans text-sm text-secondary">
+            {currentFood.defaultServingAmount
+              ? `Preview para ${defaultServingLabel}`
+              : `Sin racion guardada. El backend puede usar ${currentFood.referenceAmount} g como fallback.`}
+          </Text>
+          <NutritionGrid macros={defaultServingMacros} size="sm" className="mt-3" />
         </ScreenTransition>
       </ScrollView>
 

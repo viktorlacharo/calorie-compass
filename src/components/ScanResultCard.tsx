@@ -6,6 +6,7 @@ import { NutritionGrid } from '@/components/NutritionGrid';
 import { Badge } from '@/components/ui/badge';
 import { Text as UIText } from '@/components/ui/text';
 import { Separator } from '@/components/ui/separator';
+import { formatGramAmount } from '@/utils/foodMeasurements';
 import type { VisualAnalysisResult, NutritionLabelScanResult } from '@/types/nutrition';
 
 type ScanResultCardProps = {
@@ -60,10 +61,16 @@ function LabelScanCard({ result, className }: { result: NutritionLabelScanResult
       <View className="mt-5 flex-row flex-wrap gap-2">
         <View className="rounded-full bg-forest-panelAlt px-3 py-2">
           <Text className="font-sans text-[11px] uppercase tracking-[1.2px] text-secondary">
-            {result.servingSize}
-            {result.servingUnit} por racion
+            referencia {formatGramAmount(result.referenceAmount)}
           </Text>
         </View>
+        {result.defaultServingAmount ? (
+          <View className="rounded-full bg-forest-panelAlt px-3 py-2">
+            <Text className="font-sans text-[11px] uppercase tracking-[1.2px] text-secondary">
+              racion {formatGramAmount(result.defaultServingAmount)}
+            </Text>
+          </View>
+        ) : null}
         <View className="rounded-full bg-forest-panelAlt px-3 py-2">
           <Text className="font-sans text-[11px] uppercase tracking-[1.2px] text-secondary">Lectura automatica</Text>
         </View>
@@ -77,7 +84,7 @@ function LabelScanCard({ result, className }: { result: NutritionLabelScanResult
       </View>
 
       <Separator className="my-5" />
-      <NutritionGrid macros={result.macrosPerServing} size="sm" />
+      <NutritionGrid macros={result.referenceMacros} size="sm" />
     </View>
   );
 }
@@ -119,8 +126,7 @@ function VisualScanCard({ result, className }: { result: VisualAnalysisResult; c
                 <View className="flex-1">
                   <Text className="font-sans-medium text-base text-primary">{item.detectedFoodName}</Text>
                   <Text className="mt-1 font-mono text-[10px] tabular-nums text-secondary">
-                    ~{item.estimatedQuantity}
-                    {item.estimatedUnit}
+                    ~{item.estimatedQuantity}g
                   </Text>
                 </View>
 

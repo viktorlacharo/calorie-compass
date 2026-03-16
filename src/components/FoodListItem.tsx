@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { MacroMicroTable } from '@/components/MacroMicroTable';
 import { getSupermarketMeta } from '@/constants/supermarkets';
 import { cn } from '@/lib/utils';
+import { formatGramAmount } from '@/utils/foodMeasurements';
 import type { Food } from '@/types/nutrition';
 
 type FoodListItemProps = {
@@ -13,9 +14,13 @@ type FoodListItemProps = {
 export function FoodListItem({ food, className }: FoodListItemProps) {
   const cals = Intl.NumberFormat('es-ES', {
     maximumFractionDigits: 0,
-  }).format(food.per100g.calories);
+  }).format(food.referenceMacros.calories);
 
   const supermarket = getSupermarketMeta(food.supermarket);
+  const defaultServingLabel = food.defaultServingAmount
+    ? formatGramAmount(food.defaultServingAmount)
+    : 'sin racion';
+  const referenceLabel = formatGramAmount(food.referenceAmount);
 
   return (
     <View className={cn('border-b border-border py-5', className)}>
@@ -34,12 +39,11 @@ export function FoodListItem({ food, className }: FoodListItemProps) {
 
           <View className="mt-2 flex-row flex-wrap items-center gap-2">
             <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-secondary">
-              {food.servingSize}
-              {food.servingUnit}
+              {defaultServingLabel}
             </Text>
             <View className="h-1 w-1 rounded-full bg-muted" />
             <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-muted">
-              por 100{food.servingUnit}
+              referencia {referenceLabel}
             </Text>
 
             {supermarket ? (
@@ -57,7 +61,7 @@ export function FoodListItem({ food, className }: FoodListItemProps) {
         </View>
       </View>
 
-      <MacroMicroTable macros={food.per100g} className="mt-4 bg-transparent px-0" />
+      <MacroMicroTable macros={food.referenceMacros} className="mt-4 bg-transparent px-0" />
     </View>
   );
 }

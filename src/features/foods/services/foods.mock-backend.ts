@@ -17,7 +17,7 @@ let foodsStore = cloneFoods(mockFoods);
 function cloneFood(food: Food): Food {
   return {
     ...food,
-    per100g: { ...food.per100g },
+    referenceMacros: { ...food.referenceMacros },
   };
 }
 
@@ -58,10 +58,10 @@ export function createFoodSync(input: CreateFoodInput) {
     id: `food_${Date.now()}`,
     userId: 'user_001',
     name: input.name.trim(),
-    servingUnit: input.servingUnit,
-    servingSize: input.servingSize,
+    referenceAmount: input.referenceAmount,
+    referenceMacros: { ...input.referenceMacros },
+    defaultServingAmount: input.defaultServingAmount,
     supermarket: input.supermarket ?? undefined,
-    per100g: { ...input.per100g },
     createdAt: new Date().toISOString(),
   };
 
@@ -81,10 +81,10 @@ export function updateFoodSync(id: string, input: UpdateFoodInput) {
     updatedFood = {
       ...food,
       name: input.name.trim(),
-      servingUnit: input.servingUnit,
-      servingSize: input.servingSize,
+      referenceAmount: input.referenceAmount,
+      referenceMacros: { ...input.referenceMacros },
+      defaultServingAmount: input.defaultServingAmount,
       supermarket: input.supermarket ?? undefined,
-      per100g: { ...input.per100g },
     };
 
     return updatedFood;

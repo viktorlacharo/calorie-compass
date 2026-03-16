@@ -11,7 +11,7 @@ import type { MacroNutrients, Supermarket } from '@/types/nutrition';
 
 type FoodFormValues = {
   name: string;
-  servingSize: string;
+  defaultServingAmount: string;
   calories: string;
   protein: string;
   carbs: string;
@@ -24,8 +24,9 @@ type FoodFormProps = {
   subtitle: string;
   ctaLabel: string;
   values: FoodFormValues;
-  per100g: MacroNutrients;
+  referenceAmount: number;
   preview: MacroNutrients;
+  previewTitle: string;
   canSave: boolean;
   showPerServingPreview?: boolean;
   onChange: (field: keyof FoodFormValues, value: string | Supermarket | null) => void;
@@ -37,8 +38,9 @@ export function FoodForm({
   subtitle,
   ctaLabel,
   values,
-  per100g,
+  referenceAmount,
   preview,
+  previewTitle,
   canSave,
   showPerServingPreview = true,
   onChange,
@@ -72,12 +74,15 @@ export function FoodForm({
         <ScreenTransition variant="right" delay={30} className="mt-8 px-5">
           <View className="flex-row items-center gap-3">
             <View className="flex-1">
-              <Label nativeID="serving-size">Racion por defecto</Label>
+              <View className="flex-row items-center justify-between">
+                <Label nativeID="serving-size">Racion por defecto</Label>
+                <Text className="font-sans text-xs text-secondary">Opcional</Text>
+              </View>
               <View className="mt-1.5 flex-row items-center gap-3">
                 <Input
-                  value={values.servingSize}
-                  onChangeText={(value) => onChange('servingSize', value)}
-                  placeholder="100"
+                  value={values.defaultServingAmount}
+                  onChangeText={(value) => onChange('defaultServingAmount', value)}
+                  placeholder="Ej. 150"
                   className="flex-1"
                   inputMode="decimal"
                   accessibilityLabelledBy="serving-size"
@@ -93,30 +98,30 @@ export function FoodForm({
         </ScreenTransition>
 
         <ScreenTransition variant="right" delay={60} className="mt-8 px-5">
-          <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">Macros por 100g</Text>
+          <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">Macros de referencia</Text>
           <Text className="mt-2 font-sans text-sm leading-6 text-secondary">
-            Introduce el valor exacto por 100g para mantener consistencia cuando este alimento se reutilice en recetas y registros.
+            Introduce el valor exacto para {referenceAmount} g y manten una referencia consistente cuando este alimento se reutilice en recetas y registros.
           </Text>
 
           <View className="mt-4 flex-row gap-3">
             <View className="flex-1">
               <Label nativeID="macro-cal">Calorias</Label>
-              <Input value={values.calories} onChangeText={(value) => onChange('calories', value)} placeholder="0" className="mt-1.5" inputMode="decimal" accessibilityLabelledBy="macro-cal" accessibilityLabel="Calorias por 100 gramos" />
+              <Input value={values.calories} onChangeText={(value) => onChange('calories', value)} placeholder="0" className="mt-1.5" inputMode="decimal" accessibilityLabelledBy="macro-cal" accessibilityLabel={`Calorias por ${referenceAmount} gramos`} />
             </View>
             <View className="flex-1">
               <Label nativeID="macro-pro">Proteina</Label>
-              <Input value={values.protein} onChangeText={(value) => onChange('protein', value)} placeholder="0" className="mt-1.5" inputMode="decimal" accessibilityLabelledBy="macro-pro" accessibilityLabel="Proteina por 100 gramos" />
+              <Input value={values.protein} onChangeText={(value) => onChange('protein', value)} placeholder="0" className="mt-1.5" inputMode="decimal" accessibilityLabelledBy="macro-pro" accessibilityLabel={`Proteina por ${referenceAmount} gramos`} />
             </View>
           </View>
 
           <View className="mt-3 flex-row gap-3">
             <View className="flex-1">
               <Label nativeID="macro-carb">Carbohidratos</Label>
-              <Input value={values.carbs} onChangeText={(value) => onChange('carbs', value)} placeholder="0" className="mt-1.5" inputMode="decimal" accessibilityLabelledBy="macro-carb" accessibilityLabel="Carbohidratos por 100 gramos" />
+              <Input value={values.carbs} onChangeText={(value) => onChange('carbs', value)} placeholder="0" className="mt-1.5" inputMode="decimal" accessibilityLabelledBy="macro-carb" accessibilityLabel={`Carbohidratos por ${referenceAmount} gramos`} />
             </View>
             <View className="flex-1">
               <Label nativeID="macro-fat">Grasas</Label>
-              <Input value={values.fats} onChangeText={(value) => onChange('fats', value)} placeholder="0" className="mt-1.5" inputMode="decimal" accessibilityLabelledBy="macro-fat" accessibilityLabel="Grasas por 100 gramos" />
+              <Input value={values.fats} onChangeText={(value) => onChange('fats', value)} placeholder="0" className="mt-1.5" inputMode="decimal" accessibilityLabelledBy="macro-fat" accessibilityLabel={`Grasas por ${referenceAmount} gramos`} />
             </View>
           </View>
 
@@ -155,7 +160,7 @@ export function FoodForm({
         {showPerServingPreview ? (
           <ScreenTransition variant="right" delay={90} className="mt-8 px-5">
             <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">
-              Vista previa - racion de {values.servingSize || '0'}g
+              {previewTitle}
             </Text>
             <View className="mt-4 border-b border-border pb-4">
               <Text className="font-sans text-[10px] uppercase tracking-[1.4px] text-secondary">Calorias estimadas</Text>

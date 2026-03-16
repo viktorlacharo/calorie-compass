@@ -16,7 +16,7 @@ import { ScreenTransition } from '@/components/ScreenTransition';
 import { useFoodsQuery } from '@/features/foods/queries/use-foods-query';
 import { useFavoriteQuery } from '@/features/favorites/queries/use-favorites-query';
 import { useCreateMealLogEntryMutation } from '@/features/logs/queries/use-logs-query';
-import { calculatePerServing } from '@/utils/calculatePerServing';
+import { calculateFoodServingMacros } from '@/utils/foodMeasurements';
 import { sumMacros } from '@/utils/sumMacros';
 import type { MacroNutrients } from '@/types/nutrition';
 
@@ -26,8 +26,8 @@ function formatMacro(value: number) {
   }).format(value);
 }
 
-function formatQuantity(value: number, unit: string) {
-  return `${new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(value)} ${unit}`;
+function formatQuantity(value: number) {
+  return `${new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(value)} g`;
 }
 
 export default function FavoriteDishDetailScreen() {
@@ -73,7 +73,7 @@ export default function FavoriteDishDetailScreen() {
   const resolvedItems = currentDish.items.map((item) => {
     const food = foods.find((f) => f.id === item.foodId);
     const macros = food
-      ? calculatePerServing(food.per100g, item.quantity)
+      ? calculateFoodServingMacros(food, item.quantity)
       : { calories: 0, protein: 0, carbs: 0, fats: 0 };
 
     return { ...item, food, macros };
@@ -236,7 +236,7 @@ export default function FavoriteDishDetailScreen() {
                     </View>
                     <View className="flex-row w-full flex-nowrap items-center justify-between">
                     <Text className="font-sans text-[11px] uppercase tracking-[1.3px] text-secondary">
-                      {formatQuantity(item.quantity, item.unit)}
+                      {formatQuantity(item.quantity)}
                     </Text>
 
                       <MacroMicroTable macros={item.macros} />

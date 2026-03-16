@@ -2,10 +2,10 @@ import type { Food, FavoriteDish, Supermarket } from '@/types/nutrition';
 
 export type CreateFoodInput = {
   name: string;
-  servingSize: number;
-  servingUnit: Food['servingUnit'];
+  referenceAmount: number;
+  referenceMacros: Food['referenceMacros'];
+  defaultServingAmount?: number;
   supermarket?: Supermarket | null;
-  per100g: Food['per100g'];
 };
 
 export type UpdateFoodInput = CreateFoodInput;

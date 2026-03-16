@@ -7,8 +7,10 @@ import { FoodFormSkeleton } from '@/components/QuerySkeletons';
 import { FoodForm } from '@/features/foods/ui/FoodForm';
 import { useUpdateFoodMutation } from '@/features/foods/queries/use-food-mutations';
 import { useFoodQuery } from '@/features/foods/queries/use-foods-query';
-import { calculatePerServing } from '@/utils/calculatePerServing';
+import { calculateServingMacros } from '@/utils/calculatePerServing';
 import type { MacroNutrients, Supermarket } from '@/types/nutrition';
+
+const FOOD_REFERENCE_AMOUNT = 100;
 
 export default function EditFoodScreen() {
   const router = useRouter();
@@ -17,7 +19,7 @@ export default function EditFoodScreen() {
   const updateFoodMutation = useUpdateFoodMutation();
 
   const [name, setName] = useState('');
-  const [servingSize, setServingSize] = useState('100');
+  const [defaultServingAmount, setDefaultServingAmount] = useState('');
   const [calories, setCalories] = useState('');
   const [protein, setProtein] = useState('');
   const [carbs, setCarbs] = useState('');
@@ -30,15 +32,15 @@ export default function EditFoodScreen() {
     }
 
     setName(food.name);
-    setServingSize(String(food.servingSize));
-    setCalories(String(food.per100g.calories));
-    setProtein(String(food.per100g.protein));
-    setCarbs(String(food.per100g.carbs));
-    setFats(String(food.per100g.fats));
+    setDefaultServingAmount(food.defaultServingAmount ? String(food.defaultServingAmount) : '');
+    setCalories(String(food.referenceMacros.calories));
+    setProtein(String(food.referenceMacros.protein));
+    setCarbs(String(food.referenceMacros.carbs));
+    setFats(String(food.referenceMacros.fats));
     setSupermarket(food.supermarket ?? null);
   }, [food]);
 
-  const per100g: MacroNutrients = useMemo(
+  const referenceMacros: MacroNutrients = useMemo(
     () => ({
       calories: Number(calories) || 0,
       protein: Number(protein) || 0,
@@ -48,8 +50,13 @@ export default function EditFoodScreen() {
     [calories, protein, carbs, fats]
   );
 
-  const preview = useMemo(() => calculatePerServing(per100g, Number(servingSize) || 0), [per100g, servingSize]);
-  const canSave = Boolean(food) && name.trim().length > 0 && Number(calories) > 0 && Number(servingSize) > 0;
+  const resolvedDefaultServingAmount = Number(defaultServingAmount) || FOOD_REFERENCE_AMOUNT;
+
+  const preview = useMemo(
+    () => calculateServingMacros(referenceMacros, FOOD_REFERENCE_AMOUNT, resolvedDefaultServingAmount),
+    [referenceMacros, resolvedDefaultServingAmount]
+  );
+  const canSave = Boolean(food) && name.trim().length > 0 && Number(calories) > 0;
 
   async function handleSave() {
     if (!food) {
@@ -60,10 +67,10 @@ export default function EditFoodScreen() {
       id: food.id,
       input: {
         name,
-        servingSize: Number(servingSize) || 100,
-        servingUnit: 'g',
+        referenceAmount: FOOD_REFERENCE_AMOUNT,
+        referenceMacros,
+        defaultServingAmount: defaultServingAmount.trim().length > 0 ? resolvedDefaultServingAmount : undefined,
         supermarket,
-        per100g,
       },
     });
 
@@ -121,13 +128,14 @@ export default function EditFoodScreen() {
         title="Editar alimento"
         subtitle="Ajusta una entrada existente con la misma estructura que usaras contra backend"
         ctaLabel="Guardar cambios"
-        values={{ name, servingSize, calories, protein, carbs, fats, supermarket }}
-        per100g={per100g}
+        values={{ name, defaultServingAmount, calories, protein, carbs, fats, supermarket }}
+        referenceAmount={FOOD_REFERENCE_AMOUNT}
         preview={preview}
+        previewTitle={`Vista previa - racion de ${resolvedDefaultServingAmount}g`}
         canSave={canSave}
         onChange={(field, value) => {
           if (field === 'name') setName(String(value));
-          if (field === 'servingSize') setServingSize(String(value));
+          if (field === 'defaultServingAmount') setDefaultServingAmount(String(value));
           if (field === 'calories') setCalories(String(value));
           if (field === 'protein') setProtein(String(value));
           if (field === 'carbs') setCarbs(String(value));
