@@ -1,16 +1,17 @@
-import axios, { type AxiosRequestConfig } from 'axios';
+import axios, { type AxiosRequestConfig, type GenericAbortSignal } from 'axios';
 
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 type HttpRequestOptions = {
   method?: HttpMethod;
   body?: unknown;
   headers?: Record<string, string>;
   timeout?: number;
+  signal?: GenericAbortSignal;
 };
 
 let authToken: string | null = null;
-const axiosClient = axios.create();
+export const axiosClient = axios.create();
 
 axiosClient.interceptors.request.use((config) => {
   if (authToken) {
@@ -40,6 +41,7 @@ export async function httpRequest<TResponse>(url: string, options: HttpRequestOp
     },
     data: options.body,
     timeout: options.timeout ?? 15000,
+    signal: options.signal,
   };
 
   try {

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CreateFoodInput, UpdateFoodInput } from '@/features/foods/domain/food.contracts';
-import { createFood, removeFood, updateFood } from '@/features/foods/services/foods.mock-backend';
+import { createFood, removeFood, updateFood } from '@/features/foods/services/foods.service';
 import { foodsQueryKeys } from '@/features/foods/queries/foods.query-keys';
 
 export function useCreateFoodMutation() {

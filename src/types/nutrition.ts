@@ -9,13 +9,15 @@ export type Supermarket = 'carrefour' | 'mercadona' | 'lidl' | 'aldi' | 'eroski'
 
 export type Food = {
   id: string;
-  userId: string;
+  userId?: string;
   name: string;
   referenceAmount: number;
+  referenceUnit?: 'g';
   referenceMacros: MacroNutrients;
-  defaultServingAmount?: number;
-  supermarket?: Supermarket;
+  defaultServingAmount?: number | null;
+  supermarket?: Supermarket | null;
   createdAt: string;
+  updatedAt?: string;
 };
 
 export type FavoriteDishItem = {

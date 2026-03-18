@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getFoodById, listFoods } from '@/features/foods/services/foods.mock-backend';
+import { getFoodById, listFoods } from '@/features/foods/services/foods.service';
 import { foodsQueryKeys } from '@/features/foods/queries/foods.query-keys';
 
 export function useFoodsQuery(query: string) {

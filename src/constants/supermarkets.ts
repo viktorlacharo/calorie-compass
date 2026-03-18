@@ -43,6 +43,6 @@ export const supermarketMap: Record<Supermarket, SupermarketMeta> = {
   eroski: SUPERMARKETS[4],
 };
 
-export function getSupermarketMeta(supermarket?: Supermarket) {
+export function getSupermarketMeta(supermarket?: Supermarket | null) {
   return supermarket ? supermarketMap[supermarket] : null;
 }

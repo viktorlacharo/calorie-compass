@@ -11,7 +11,6 @@ import { Text as UIText } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { getSupermarketMeta } from '@/constants/supermarkets';
-import { mockFavoriteDishes } from '@/mocks/nutrition';
 import { useDeleteFoodMutation } from '@/features/foods/queries/use-food-mutations';
 import { useFoodQuery } from '@/features/foods/queries/use-foods-query';
 import {
@@ -66,13 +65,6 @@ export default function FoodDetailScreen() {
   }).format(new Date(currentFood.createdAt));
 
   async function handleDelete() {
-    const usages = mockFavoriteDishes.filter((dish) => dish.items.some((item) => item.foodId === currentFood.id)).length;
-
-    if (usages > 0) {
-      Alert.alert('No se puede borrar', `"${currentFood.name}" se usa en ${usages} ${usages === 1 ? 'receta' : 'recetas'}. Quita primero esas referencias.`);
-      return;
-    }
-
     const result = await deleteFoodMutation.mutateAsync(currentFood.id);
 
     if (result.status === 'blocked') {
@@ -80,7 +72,7 @@ export default function FoodDetailScreen() {
       return;
     }
 
-    Alert.alert('Borrado preparado', `"${currentFood.name}" quedaria eliminado cuando conectemos el backend mock.`, [
+    Alert.alert('Alimento eliminado', `"${currentFood.name}" se ha eliminado correctamente.`, [
       { text: 'Vale', onPress: () => router.replace('/(tabs)/foods') },
     ]);
   }
