@@ -1,12 +1,11 @@
-import { useMemo, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
+import type { CreateFoodInput } from '@/features/foods/domain/food.contracts';
 import { useCreateFoodMutation } from '@/features/foods/queries/use-food-mutations';
-import { FoodForm } from '@/features/foods/ui/FoodForm';
-import { calculateServingMacros } from '@/utils/calculatePerServing';
-import type { MacroNutrients, Supermarket } from '@/types/nutrition';
+import { FoodForm, type FoodFormValues } from '@/features/foods/ui/FoodForm';
+import { useAppForm } from '@/features/foods/ui/form';
 
 const FOOD_REFERENCE_AMOUNT = 100;
 
@@ -14,49 +13,41 @@ export default function AddFoodScreen() {
   const router = useRouter();
   const createFoodMutation = useCreateFoodMutation();
 
-  const [name, setName] = useState('');
-  const [defaultServingAmount, setDefaultServingAmount] = useState('');
-  const [calories, setCalories] = useState('');
-  const [protein, setProtein] = useState('');
-  const [carbs, setCarbs] = useState('');
-  const [fats, setFats] = useState('');
-  const [supermarket, setSupermarket] = useState<Supermarket | null>(null);
+  const defaultValues: FoodFormValues = {
+    name: '',
+    referenceAmount: FOOD_REFERENCE_AMOUNT,
+    referenceMacros: {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fats: 0,
+    },
+    defaultServingAmount: undefined,
+    supermarket: null,
+  };
 
-  const referenceMacros: MacroNutrients = useMemo(
-    () => ({
-      calories: Number(calories) || 0,
-      protein: Number(protein) || 0,
-      carbs: Number(carbs) || 0,
-      fats: Number(fats) || 0,
-    }),
-    [calories, protein, carbs, fats]
-  );
+  const form = useAppForm({
+    defaultValues,
+    onSubmit: async ({ value }) => {
+      const input: CreateFoodInput = {
+        name: value.name,
+        referenceAmount: value.referenceAmount,
+        referenceMacros: value.referenceMacros,
+        defaultServingAmount: value.defaultServingAmount,
+        supermarket: value.supermarket,
+      };
 
-  const resolvedDefaultServingAmount = Number(defaultServingAmount) || FOOD_REFERENCE_AMOUNT;
+      const createdFood = await createFoodMutation.mutateAsync(input);
 
-  const preview = useMemo(
-    () => calculateServingMacros(referenceMacros, FOOD_REFERENCE_AMOUNT, resolvedDefaultServingAmount),
-    [referenceMacros, resolvedDefaultServingAmount]
-  );
-  const canSave = name.trim().length > 0 && Number(calories) > 0;
-
-  async function handleSave() {
-    const createdFood = await createFoodMutation.mutateAsync({
-      name,
-      referenceAmount: FOOD_REFERENCE_AMOUNT,
-      referenceMacros,
-      defaultServingAmount: defaultServingAmount.trim().length > 0 ? resolvedDefaultServingAmount : undefined,
-      supermarket,
-    });
-
-    Alert.alert('Alimento preparado', `${name} ya esta listo para conectarse al backend mock.`, [
-      {
-        text: 'Ver detalle',
-        onPress: () => router.replace({ pathname: '/food/[id]', params: { id: createdFood.id } }),
-      },
-      { text: 'Volver', onPress: () => router.back() },
-    ]);
-  }
+      Alert.alert('Alimento creado', `${value.name} se ha guardado en tu backend.`, [
+        {
+          text: 'Ver detalle',
+          onPress: () => router.replace({ pathname: '/food/[id]', params: { id: createdFood.id } }),
+        },
+        { text: 'Volver', onPress: () => router.back() },
+      ]);
+    },
+  });
 
   return (
     <SafeAreaView className="flex-1 bg-canvas" edges={['top']}>
@@ -73,24 +64,11 @@ export default function AddFoodScreen() {
       </View>
 
       <FoodForm
+        form={form as any}
         title="Nuevo alimento"
         subtitle="Crea una entrada precisa y reutilizable"
         ctaLabel="Guardar alimento"
-        values={{ name, defaultServingAmount, calories, protein, carbs, fats, supermarket }}
-        referenceAmount={FOOD_REFERENCE_AMOUNT}
-        preview={preview}
-        previewTitle={`Vista previa - racion de ${resolvedDefaultServingAmount}g`}
-        canSave={canSave}
-        onChange={(field, value) => {
-          if (field === 'name') setName(String(value));
-          if (field === 'defaultServingAmount') setDefaultServingAmount(String(value));
-          if (field === 'calories') setCalories(String(value));
-          if (field === 'protein') setProtein(String(value));
-          if (field === 'carbs') setCarbs(String(value));
-          if (field === 'fats') setFats(String(value));
-          if (field === 'supermarket') setSupermarket(value as Supermarket | null);
-        }}
-        onSubmit={() => void handleSave()}
+        showPerServingPreview
       />
     </SafeAreaView>
   );
