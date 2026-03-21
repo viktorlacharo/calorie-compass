@@ -72,6 +72,40 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /foods/barcode/{barcode}:
+    get:
+      operationId: getFoodByBarcode
+      summary: Looks up a product by barcode for authenticated user
+      parameters:
+        - name: barcode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^(\d{8}|\d{12}|\d{13})$'
+      responses:
+        '200':
+          description: Product found with complete macros
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFoodByBarcode200'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Product found but nutriments are incomplete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFoodByBarcode422'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
 components:
   securitySchemes:
@@ -95,6 +129,18 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
     InternalServerError:
       description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    GatewayTimeout:
+      description: Upstream timeout
       content:
         application/json:
           schema:
@@ -125,6 +171,27 @@ components:
           type: number
         fats:
           type: number
+
+    MacroNutrientsNullable:
+      type: object
+      required:
+        - calories
+        - protein
+        - carbs
+        - fats
+      properties:
+        calories:
+          type: number
+          nullable: true
+        protein:
+          type: number
+          nullable: true
+        carbs:
+          type: number
+          nullable: true
+        fats:
+          type: number
+          nullable: true
 
     Supermarket:
       type: string
@@ -193,6 +260,69 @@ components:
           allOf:
             - $ref: '#/components/schemas/Supermarket'
           nullable: true
+
+    BarcodeLookupItem:
+      type: object
+      required:
+        - barcode
+        - detectedName
+        - referenceAmount
+        - referenceUnit
+        - referenceMacros
+        - source
+        - fetchedAt
+        - confidence
+      properties:
+        barcode:
+          type: string
+        detectedName:
+          type: string
+        brand:
+          type: string
+          nullable: true
+        referenceAmount:
+          type: number
+          example: 100
+        referenceUnit:
+          $ref: '#/components/schemas/MeasurementUnit'
+        referenceMacros:
+          $ref: '#/components/schemas/MacroNutrients'
+        source:
+          type: string
+          enum:
+            - openfoodfacts
+        fetchedAt:
+          type: string
+          format: date-time
+        confidence:
+          type: number
+
+    BarcodeLookupItemIncomplete:
+      allOf:
+        - $ref: '#/components/schemas/BarcodeLookupItem'
+        - type: object
+          properties:
+            referenceMacros:
+              $ref: '#/components/schemas/MacroNutrientsNullable'
+
+    GetFoodByBarcode200:
+      type: object
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/BarcodeLookupItem'
+
+    GetFoodByBarcode422:
+      type: object
+      required:
+        - message
+        - item
+      properties:
+        message:
+          type: string
+        item:
+          $ref: '#/components/schemas/BarcodeLookupItemIncomplete'
 
     MeResponse:
       type: object

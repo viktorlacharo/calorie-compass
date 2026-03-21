@@ -10,6 +10,18 @@ type HttpRequestOptions = {
   signal?: GenericAbortSignal;
 };
 
+export class HttpRequestError<TData = unknown> extends Error {
+  readonly status?: number;
+  readonly data?: TData;
+
+  constructor(message: string, options?: { status?: number; data?: TData }) {
+    super(message);
+    this.name = 'HttpRequestError';
+    this.status = options?.status;
+    this.data = options?.data;
+  }
+}
+
 let authToken: string | null = null;
 export const axiosClient = axios.create();
 
@@ -49,12 +61,14 @@ export async function httpRequest<TResponse>(url: string, options: HttpRequestOp
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      const responseData = error.response?.data;
       const errorMessage =
-        typeof error.response?.data === 'string'
-          ? error.response.data
-          : error.response?.data?.message ?? error.message;
+        typeof responseData === 'string' ? responseData : responseData?.message ?? error.message;
 
-      throw new Error(errorMessage || `HTTP ${error.response?.status ?? 'request_failed'}`);
+      throw new HttpRequestError(errorMessage || `HTTP ${error.response?.status ?? 'request_failed'}`, {
+        status: error.response?.status,
+        data: responseData,
+      });
     }
 
     throw error;

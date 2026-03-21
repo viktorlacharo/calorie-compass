@@ -1,6 +1,6 @@
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import type { CreateFoodInput } from '@/features/foods/domain/food.contracts';
 import { useCreateFoodMutation } from '@/features/foods/queries/use-food-mutations';
@@ -9,20 +9,60 @@ import { useAppForm } from '@/features/foods/ui/form';
 
 const FOOD_REFERENCE_AMOUNT = 100;
 
+function pickParam(param: string | string[] | undefined) {
+  if (Array.isArray(param)) {
+    return param[0];
+  }
+
+  return param;
+}
+
+function parseMacroParam(param: string | string[] | undefined) {
+  const value = pickParam(param);
+
+  if (!value) {
+    return 0;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function parseServingParam(param: string | string[] | undefined) {
+  const value = pickParam(param);
+
+  if (!value) {
+    return FOOD_REFERENCE_AMOUNT;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : FOOD_REFERENCE_AMOUNT;
+}
+
 export default function AddFoodScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+    name?: string | string[];
+    calories?: string | string[];
+    protein?: string | string[];
+    carbs?: string | string[];
+    fats?: string | string[];
+    serving?: string | string[];
+  }>();
   const createFoodMutation = useCreateFoodMutation();
+  const prefilledName = pickParam(params.name) ?? '';
+  const prefilledServing = parseServingParam(params.serving);
 
   const defaultValues: FoodFormValues = {
-    name: '',
+    name: prefilledName,
     referenceAmount: FOOD_REFERENCE_AMOUNT,
     referenceMacros: {
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fats: 0,
+      calories: parseMacroParam(params.calories),
+      protein: parseMacroParam(params.protein),
+      carbs: parseMacroParam(params.carbs),
+      fats: parseMacroParam(params.fats),
     },
-    defaultServingAmount: FOOD_REFERENCE_AMOUNT,
+    defaultServingAmount: prefilledServing,
     supermarket: null,
   };
 
@@ -37,15 +77,8 @@ export default function AddFoodScreen() {
         supermarket: value.supermarket,
       };
 
-      const createdFood = await createFoodMutation.mutateAsync(input);
-
-      Alert.alert('Alimento creado', `${value.name} se ha guardado en tu backend.`, [
-        {
-          text: 'Ver detalle',
-          onPress: () => router.replace({ pathname: '/food/[id]', params: { id: createdFood.id } }),
-        },
-        { text: 'Volver', onPress: () => router.back() },
-      ]);
+      await createFoodMutation.mutateAsync(input);
+      router.replace('/(tabs)/foods');
     },
   });
 
@@ -69,6 +102,7 @@ export default function AddFoodScreen() {
         subtitle="Crea una entrada precisa y reutilizable"
         ctaLabel="Guardar alimento"
         showPerServingPreview
+        isSubmitting={createFoodMutation.isPending}
       />
     </SafeAreaView>
   );

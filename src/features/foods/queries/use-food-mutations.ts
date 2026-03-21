@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CreateFoodInput, UpdateFoodInput } from '@/features/foods/domain/food.contracts';
-import { createFood, removeFood, updateFood } from '@/features/foods/services/foods.service';
+import { createFood, lookupFoodByBarcode, removeFood, updateFood } from '@/features/foods/services/foods.service';
 import { foodsQueryKeys } from '@/features/foods/queries/foods.query-keys';
 
 export function useCreateFoodMutation() {
@@ -36,5 +36,11 @@ export function useDeleteFoodMutation() {
       queryClient.invalidateQueries({ queryKey: foodsQueryKeys.all });
       queryClient.removeQueries({ queryKey: foodsQueryKeys.detail(id) });
     },
+  });
+}
+
+export function useBarcodeLookupMutation() {
+  return useMutation({
+    mutationFn: (barcode: string) => lookupFoodByBarcode(barcode),
   });
 }

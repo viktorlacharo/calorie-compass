@@ -7,14 +7,22 @@
  */
 
 export * from './badRequestResponse';
+export * from './barcodeLookupItem';
+export * from './barcodeLookupItemIncomplete';
+export * from './barcodeLookupItemSource';
 export * from './createFood201';
 export * from './createFoodRequest';
 export * from './errorResponse';
 export * from './food';
+export * from './gatewayTimeoutResponse';
+export * from './getFoodByBarcode200';
+export * from './getFoodByBarcode422';
 export * from './getFoods200';
 export * from './internalServerErrorResponse';
 export * from './macroNutrients';
+export * from './macroNutrientsNullable';
 export * from './measurementUnit';
 export * from './meResponse';
+export * from './notFoundResponse';
 export * from './supermarket';
 export * from './unauthorizedResponse';

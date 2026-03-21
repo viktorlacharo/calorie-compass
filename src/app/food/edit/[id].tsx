@@ -101,6 +101,7 @@ export default function EditFoodScreen() {
         subtitle="Ajusta una entrada existente con la misma estructura que usaras contra backend"
         ctaLabel="Guardar cambios"
         showPerServingPreview
+        isSubmitting={updateFoodMutation.isPending}
       />
     </SafeAreaView>
   );

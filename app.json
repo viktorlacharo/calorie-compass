@@ -23,7 +23,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "permissions": [
-        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
       "package": "com.anonymous.caloriecompass"
@@ -39,6 +39,12 @@
       "expo-router",
       "expo-font",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Permite usar la camara para escanear codigos de barras de alimentos."
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "cameraPermission": "Permite usar la camara para fotografiar platos y etiquetas nutricionales.",
@@ -46,6 +52,12 @@
         }
       ],
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a93ee4bd-58b3-4e21-a072-6c268407041e"
+      }
+    }
   }
 }

@@ -33,3 +33,32 @@ export type FoodsRepositoryDependencies = {
   updateFood: (id: string, input: UpdateFoodInput) => Food | null;
   deleteFood: (id: string) => boolean;
 };
+
+export type NullableMacroNutrients = {
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fats: number | null;
+};
+
+export type BarcodeLookupItem = {
+  barcode: string;
+  detectedName: string;
+  brand?: string | null;
+  referenceAmount: number;
+  referenceUnit: 'g';
+  referenceMacros: Food['referenceMacros'];
+  source: 'openfoodfacts';
+  fetchedAt: string;
+  confidence: number;
+};
+
+export type BarcodeLookupItemIncomplete = Omit<BarcodeLookupItem, 'referenceMacros'> & {
+  referenceMacros: NullableMacroNutrients;
+};
+
+export type BarcodeLookupResult =
+  | { status: 'found'; item: BarcodeLookupItem }
+  | { status: 'incomplete'; message: string; item: BarcodeLookupItemIncomplete }
+  | { status: 'not-found'; message: string }
+  | { status: 'error'; message: string };

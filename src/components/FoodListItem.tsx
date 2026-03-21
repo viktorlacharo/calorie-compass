@@ -25,13 +25,13 @@ export function FoodListItem({ food, className }: FoodListItemProps) {
   return (
     <View className={cn('border-b border-border py-5', className)}>
       <View className="flex-row items-start justify-between gap-3">
-        <View className="flex-1">
+        <View className="min-w-0 flex-1">
           <View className="flex-row items-center justify-between gap-3">
-            <Text className="font-sans-medium text-base text-primary" numberOfLines={1}>
+            <Text className="min-w-0 flex-1 font-sans-medium text-base text-primary" numberOfLines={1} ellipsizeMode="tail">
               {food.name}
             </Text>
 
-            <View className="flex-row items-center gap-3">
+            <View className="shrink-0 flex-row items-center gap-3">
               <Text className="font-sans-bold text-lg text-primary">{cals} kcal</Text>
               <ChevronRight size={16} color="#70806E" strokeWidth={1.7} />
             </View>

@@ -1,4 +1,4 @@
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { SUPERMARKETS } from '@/constants/supermarkets';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ type FoodFormProps = {
   subtitle: string;
   ctaLabel: string;
   showPerServingPreview: boolean;
+  isSubmitting?: boolean;
 };
 
 const toNumber = (value: string) => {
@@ -63,8 +64,9 @@ export const FoodForm = withForm({
     subtitle: '',
     ctaLabel: '',
     showPerServingPreview: true,
+    isSubmitting: false,
   } as FoodFormProps,
-  render: function Render({ form, title, subtitle, ctaLabel, showPerServingPreview }) {
+  render: function Render({ form, title, subtitle, ctaLabel, showPerServingPreview, isSubmitting = false }) {
 
     const { defaultServingAmount } = useStore(form.store, (state) => state.values);
 
@@ -269,12 +271,16 @@ export const FoodForm = withForm({
         <form.Subscribe>
           {(state) => {
             const values = state.values as FoodFormValues;
-            const canSave = values.name.trim().length > 0 && values.referenceMacros.calories > 0;
+            const canSave = values.name.trim().length > 0 && values.referenceMacros.calories > 0 && !isSubmitting;
 
             return (
-              <View className="border-t border-border bg-surface px-5 py-4">
+              <View className="border-t border-border bg-surface px-5 pb-8 pt-4">
                 <Button onPress={() => void form.handleSubmit()} disabled={!canSave} accessibilityLabel={ctaLabel}>
-                  <Check size={16} color="#FFFFFF" strokeWidth={2} />
+                  {isSubmitting ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Check size={16} color="#FFFFFF" strokeWidth={2} />
+                  )}
                   <UIText>{ctaLabel}</UIText>
                 </Button>
               </View>
