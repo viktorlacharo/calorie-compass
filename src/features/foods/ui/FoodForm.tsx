@@ -10,6 +10,7 @@ import { Text as UIText } from '@/components/ui/text';
 import { withForm } from '@/features/foods/ui/form';
 import { calculateServingMacros } from '@/utils/calculatePerServing';
 import type { Supermarket } from '@/types/nutrition';
+import { useStore } from '@tanstack/react-form';
 
 const FOOD_REFERENCE_AMOUNT = 100;
 
@@ -64,6 +65,9 @@ export const FoodForm = withForm({
     showPerServingPreview: true,
   } as FoodFormProps,
   render: function Render({ form, title, subtitle, ctaLabel, showPerServingPreview }) {
+
+    const { defaultServingAmount } = useStore(form.store, (state) => state.values);
+
     return (
       <>
         <ScrollView
@@ -125,7 +129,7 @@ export const FoodForm = withForm({
           <ScreenTransition variant="right" delay={60} className="mt-8 px-5">
             <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">Macros de referencia</Text>
             <Text className="mt-2 font-sans text-sm leading-6 text-secondary">
-              Introduce el valor exacto para {FOOD_REFERENCE_AMOUNT} g y manten una referencia consistente cuando este alimento se reutilice en recetas y registros.
+              Introduce el valor exacto para {defaultServingAmount} g y manten una referencia consistente cuando este alimento se reutilice en recetas y registros.
             </Text>
 
             <View className="mt-4 flex-row gap-3">

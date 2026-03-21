@@ -22,7 +22,7 @@ export default function AddFoodScreen() {
       carbs: 0,
       fats: 0,
     },
-    defaultServingAmount: undefined,
+    defaultServingAmount: FOOD_REFERENCE_AMOUNT,
     supermarket: null,
   };
 
