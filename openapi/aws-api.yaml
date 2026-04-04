@@ -70,6 +70,46 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /foods/{id}:
+    put:
+      operationId: updateFood
+      summary: Updates a food for authenticated user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFoodRequest'
+      responses:
+        '200':
+          description: Food updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - item
+                properties:
+                  item:
+                    $ref: '#/components/schemas/Food'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /foods/barcode/{barcode}:
@@ -85,11 +125,13 @@ paths:
             pattern: '^(\d{8}|\d{12}|\d{13})$'
       responses:
         '200':
-          description: Product found with complete macros
+          description: Product already exists or found with complete macros
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetFoodByBarcode200'
+                oneOf:
+                  - $ref: '#/components/schemas/BarcodeLookupExistsResponse'
+                  - $ref: '#/components/schemas/GetFoodByBarcode200'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -145,6 +187,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateFoodConflictResponse'
 
   schemas:
     ErrorResponse:
@@ -232,6 +280,12 @@ components:
         defaultServingAmount:
           type: number
           nullable: true
+        barcode:
+          type: string
+          nullable: true
+        brand:
+          type: string
+          nullable: true
         supermarket:
           allOf:
             - $ref: '#/components/schemas/Supermarket'
@@ -247,9 +301,62 @@ components:
       type: object
       required:
         - name
+        - referenceAmount
         - referenceMacros
       properties:
         name:
+          type: string
+        referenceAmount:
+          type: number
+          minimum: 0.1
+        barcode:
+          type: string
+          pattern: '^(\d{8}|\d{12}|\d{13})$'
+        brand:
+          type: string
+        referenceMacros:
+          $ref: '#/components/schemas/MacroNutrients'
+        defaultServingAmount:
+          type: number
+          minimum: 0.1
+        supermarket:
+          allOf:
+            - $ref: '#/components/schemas/Supermarket'
+          nullable: true
+
+    CreateFoodConflictResponse:
+      type: object
+      required:
+        - message
+        - barcode
+        - existingFoodId
+        - existingFoodName
+      properties:
+        message:
+          type: string
+        barcode:
+          type: string
+        existingFoodId:
+          type: string
+        existingFoodName:
+          type: string
+
+    UpdateFoodRequest:
+      type: object
+      required:
+        - name
+        - referenceAmount
+        - referenceMacros
+      properties:
+        name:
+          type: string
+        referenceAmount:
+          type: number
+          minimum: 0.1
+        barcode:
+          type: string
+          pattern: '^(\d{8}|\d{12}|\d{13})$'
+        brand:
           type: string
         referenceMacros:
           $ref: '#/components/schemas/MacroNutrients'
@@ -305,11 +412,35 @@ components:
             referenceMacros:
               $ref: '#/components/schemas/MacroNutrientsNullable'
 
+    BarcodeLookupExistsResponse:
+      type: object
+      required:
+        - status
+        - barcode
+        - existingFoodId
+        - existingFoodName
+      properties:
+        status:
+          type: string
+          enum:
+            - exists
+        barcode:
+          type: string
+        existingFoodId:
+          type: string
+        existingFoodName:
+          type: string
+
     GetFoodByBarcode200:
       type: object
       required:
+        - status
         - item
       properties:
+        status:
+          type: string
+          enum:
+            - found
         item:
           $ref: '#/components/schemas/BarcodeLookupItem'
 

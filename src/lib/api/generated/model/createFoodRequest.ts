@@ -10,6 +10,11 @@ import type { Supermarket } from './supermarket';
 
 export interface CreateFoodRequest {
   name: string;
+  /** @minimum 0.1 */
+  referenceAmount: number;
+  /** @pattern ^(\d{8}|\d{12}|\d{13})$ */
+  barcode?: string;
+  brand?: string;
   referenceMacros: MacroNutrients;
   /** @minimum 0.1 */
   defaultServingAmount?: number;

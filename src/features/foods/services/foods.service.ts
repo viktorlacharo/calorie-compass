@@ -2,7 +2,9 @@ import {
   createFood as createFoodAws,
   getFoodByBarcode as getFoodByBarcodeAws,
   getFoods as getFoodsAws,
+  updateFood as updateFoodAws,
 } from '@/lib/api/generated/aws-api';
+import type { BarcodeLookupExistsResponse, GetFoodByBarcode200 } from '@/lib/api/generated/model/index';
 import { HttpRequestError } from '@/lib/api/http-client';
 import type {
   BarcodeLookupItemIncomplete,
@@ -58,6 +60,9 @@ export async function getFoodById(id: string) {
 export async function createFood(input: CreateFoodInput) {
   const response = await createFoodAws({
     name: input.name.trim(),
+    referenceAmount: input.referenceAmount,
+    barcode: input.barcode,
+    brand: input.brand,
     referenceMacros: { ...input.referenceMacros },
     defaultServingAmount: input.defaultServingAmount,
     supermarket: input.supermarket ?? null,
@@ -67,9 +72,17 @@ export async function createFood(input: CreateFoodInput) {
 }
 
 export async function updateFood(id: string, input: UpdateFoodInput): Promise<Food> {
-  void id;
-  void input;
-  throw new Error('Actualizar alimentos en AWS aun no esta disponible.');
+  const response = await updateFoodAws(id, {
+    name: input.name.trim(),
+    referenceAmount: input.referenceAmount,
+    barcode: input.barcode,
+    brand: input.brand,
+    referenceMacros: { ...input.referenceMacros },
+    defaultServingAmount: input.defaultServingAmount,
+    supermarket: input.supermarket ?? null,
+  });
+
+  return response.item as Food;
 }
 
 export async function removeFood(id: string): Promise<DeleteFoodResult> {
@@ -80,14 +93,27 @@ export async function removeFood(id: string): Promise<DeleteFoodResult> {
 export async function lookupFoodByBarcode(barcode: string): Promise<BarcodeLookupResult> {
   try {
     const response = await getFoodByBarcodeAws(barcode);
+
+    if (response.status === 'exists') {
+      const existsResponse = response as BarcodeLookupExistsResponse;
+      return {
+        status: 'exists',
+        barcode: existsResponse.barcode,
+        existingFoodId: existsResponse.existingFoodId,
+        existingFoodName: existsResponse.existingFoodName,
+      };
+    }
+
+    const foundResponse = response as GetFoodByBarcode200;
     return {
       status: 'found',
       item: {
-        ...response.item,
+        ...foundResponse.item,
         source: 'openfoodfacts',
         referenceUnit: 'g',
       },
     };
+
   } catch (error) {
     if (error instanceof HttpRequestError) {
       if (error.status === 422 && error.data && typeof error.data === 'object') {

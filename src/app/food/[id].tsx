@@ -112,6 +112,11 @@ export default function FoodDetailScreen() {
                 {defaultServingLabel}
               </UIText>
             </Badge>
+            {currentFood.brand ? (
+              <Badge variant="outline">
+                <UIText className="text-[9px]">{currentFood.brand}</UIText>
+              </Badge>
+            ) : null}
             {supermarket ? (
               <View className="flex-row items-center gap-2 rounded-full border border-border bg-forest-panelAlt px-3 py-1.5">
                 <View className="h-5 w-5 items-center justify-center rounded-full bg-white/90">
@@ -127,6 +132,12 @@ export default function FoodDetailScreen() {
           <View className="mt-1.5 flex-row items-center gap-2">
             <Text className="font-sans text-[10px] text-muted">Anadido el {createdDate}</Text>
           </View>
+          {currentFood.barcode ? (
+            <View className="mt-3 rounded-[24px] border border-border bg-surface/80 px-4 py-4">
+              <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">Codigo de barras</Text>
+              <Text className="mt-2 font-mono text-sm text-primary">{currentFood.barcode}</Text>
+            </View>
+          ) : null}
         </ScreenTransition>
 
         <Separator className="mx-5 my-4" />

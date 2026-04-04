@@ -11,6 +11,8 @@ export type Food = {
   id: string;
   userId?: string;
   name: string;
+  barcode?: string | null;
+  brand?: string | null;
   referenceAmount: number;
   referenceUnit?: 'g';
   referenceMacros: MacroNutrients;

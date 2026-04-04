@@ -131,7 +131,7 @@ export const FoodForm = withForm({
           <ScreenTransition variant="right" delay={60} className="mt-8 px-5">
             <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">Macros de referencia</Text>
             <Text className="mt-2 font-sans text-sm leading-6 text-secondary">
-              Introduce el valor exacto para {defaultServingAmount} g y manten una referencia consistente cuando este alimento se reutilice en recetas y registros.
+              Introduce el valor exacto para {defaultServingAmount ?? FOOD_REFERENCE_AMOUNT} g y manten una referencia consistente cuando este alimento se reutilice en recetas y registros.
             </Text>
 
             <View className="mt-4 flex-row gap-3">

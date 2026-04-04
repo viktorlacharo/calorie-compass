@@ -26,16 +26,20 @@ import type {
 
 import type {
   BadRequestResponse,
+  BarcodeLookupExistsResponse,
+  ConflictResponse,
   CreateFood201,
   CreateFoodRequest,
   GatewayTimeoutResponse,
-  GetFoodByBarcode200,
+  GetFoodByBarcode200 as __GetFoodByBarcode200,
   GetFoodByBarcode422,
   GetFoods200,
   InternalServerErrorResponse,
   MeResponse,
   NotFoundResponse,
-  UnauthorizedResponse
+  UnauthorizedResponse,
+  UpdateFood200,
+  UpdateFoodRequest
 } from './model';
 
 import { orvalHttpClient } from '../orval-mutator';
@@ -245,7 +249,7 @@ export const createFood = (
   
 
 
-export const getCreateFoodMutationOptions = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | InternalServerErrorResponse>,
+export const getCreateFoodMutationOptions = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ConflictResponse | InternalServerErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFood>>, TError,{data: BodyType<CreateFoodRequest>}, TContext>, request?: SecondParameter<typeof orvalHttpClient>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createFood>>, TError,{data: BodyType<CreateFoodRequest>}, TContext> => {
 
@@ -274,12 +278,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateFoodMutationResult = NonNullable<Awaited<ReturnType<typeof createFood>>>
     export type CreateFoodMutationBody = BodyType<CreateFoodRequest>
-    export type CreateFoodMutationError = ErrorType<BadRequestResponse | UnauthorizedResponse | InternalServerErrorResponse>
+    export type CreateFoodMutationError = ErrorType<BadRequestResponse | UnauthorizedResponse | ConflictResponse | InternalServerErrorResponse>
 
     /**
  * @summary Creates a food for authenticated user
  */
-export const useCreateFood = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | InternalServerErrorResponse>,
+export const useCreateFood = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | ConflictResponse | InternalServerErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFood>>, TError,{data: BodyType<CreateFoodRequest>}, TContext>, request?: SecondParameter<typeof orvalHttpClient>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createFood>>,
@@ -291,6 +295,71 @@ export const useCreateFood = <TError = ErrorType<BadRequestResponse | Unauthoriz
     }
     
 /**
+ * @summary Updates a food for authenticated user
+ */
+export const updateFood = (
+    id: string,
+    updateFoodRequest: BodyType<UpdateFoodRequest>,
+ options?: SecondParameter<typeof orvalHttpClient>,signal?: AbortSignal
+) => {
+      
+      
+      return orvalHttpClient<UpdateFood200>(
+      {url: `/foods/${id}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: updateFoodRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getUpdateFoodMutationOptions = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | NotFoundResponse | ConflictResponse | InternalServerErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFood>>, TError,{id: string;data: BodyType<UpdateFoodRequest>}, TContext>, request?: SecondParameter<typeof orvalHttpClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateFood>>, TError,{id: string;data: BodyType<UpdateFoodRequest>}, TContext> => {
+
+const mutationKey = ['updateFood'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateFood>>, {id: string;data: BodyType<UpdateFoodRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateFood(id,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateFoodMutationResult = NonNullable<Awaited<ReturnType<typeof updateFood>>>
+    export type UpdateFoodMutationBody = BodyType<UpdateFoodRequest>
+    export type UpdateFoodMutationError = ErrorType<BadRequestResponse | UnauthorizedResponse | NotFoundResponse | ConflictResponse | InternalServerErrorResponse>
+
+    /**
+ * @summary Updates a food for authenticated user
+ */
+export const useUpdateFood = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | NotFoundResponse | ConflictResponse | InternalServerErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFood>>, TError,{id: string;data: BodyType<UpdateFoodRequest>}, TContext>, request?: SecondParameter<typeof orvalHttpClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateFood>>,
+        TError,
+        {id: string;data: BodyType<UpdateFoodRequest>},
+        TContext
+      > => {
+      return useMutation(getUpdateFoodMutationOptions(options), queryClient);
+    }
+    
+/**
  * @summary Looks up a product by barcode for authenticated user
  */
 export const getFoodByBarcode = (
@@ -299,7 +368,7 @@ export const getFoodByBarcode = (
 ) => {
       
       
-      return orvalHttpClient<GetFoodByBarcode200>(
+      return orvalHttpClient<BarcodeLookupExistsResponse | __GetFoodByBarcode200>(
       {url: `/foods/barcode/${barcode}`, method: 'GET', signal
     },
       options);

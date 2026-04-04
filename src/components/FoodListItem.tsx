@@ -38,6 +38,14 @@ export function FoodListItem({ food, className }: FoodListItemProps) {
           </View>
 
           <View className="mt-2 flex-row flex-wrap items-center gap-2">
+            {food.brand ? (
+              <>
+                <Text className="font-sans text-[11px] uppercase tracking-[1.2px] text-secondary">
+                  {food.brand}
+                </Text>
+                <View className="h-1 w-1 rounded-full bg-muted" />
+              </>
+            ) : null}
             <Text className="font-sans text-[11px] uppercase tracking-[1.4px] text-secondary">
               {defaultServingLabel}
             </Text>
@@ -55,6 +63,13 @@ export function FoodListItem({ food, className }: FoodListItemProps) {
                     {supermarket.label}
                   </Text>
                 </View>
+              </>
+            ) : null}
+
+            {food.barcode ? (
+              <>
+                <View className="h-1 w-1 rounded-full bg-muted" />
+                <Text className="font-mono text-[10px] uppercase tracking-[1px] text-muted">EAN {food.barcode}</Text>
               </>
             ) : null}
           </View>

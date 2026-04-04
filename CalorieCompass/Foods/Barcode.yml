@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: https://iaerxz52fj.execute-api.eu-south-2.amazonaws.com/foods/barcode/8410376016857
+  url: https://iaerxz52fj.execute-api.eu-south-2.amazonaws.com/foods/barcode/8480000040404
   auth: inherit
 
 settings:

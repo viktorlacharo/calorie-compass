@@ -2,6 +2,8 @@ import type { Food, FavoriteDish, Supermarket } from '@/types/nutrition';
 
 export type CreateFoodInput = {
   name: string;
+  barcode?: string;
+  brand?: string;
   referenceAmount: number;
   referenceMacros: Food['referenceMacros'];
   defaultServingAmount?: number;
@@ -58,6 +60,7 @@ export type BarcodeLookupItemIncomplete = Omit<BarcodeLookupItem, 'referenceMacr
 };
 
 export type BarcodeLookupResult =
+  | { status: 'exists'; barcode: string; existingFoodId: string; existingFoodName: string }
   | { status: 'found'; item: BarcodeLookupItem }
   | { status: 'incomplete'; message: string; item: BarcodeLookupItemIncomplete }
   | { status: 'not-found'; message: string }

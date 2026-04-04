@@ -6,22 +6,17 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { MacroNutrients } from './macroNutrients';
-import type { MeasurementUnit } from './measurementUnit';
 import type { Supermarket } from './supermarket';
 
-export interface Food {
-  id: string;
+export interface UpdateFoodRequest {
   name: string;
+  /** @minimum 0.1 */
   referenceAmount: number;
-  referenceUnit: MeasurementUnit;
+  /** @pattern ^(\d{8}|\d{12}|\d{13})$ */
+  barcode?: string;
+  brand?: string;
   referenceMacros: MacroNutrients;
-  /** @nullable */
-  defaultServingAmount?: number | null;
-  /** @nullable */
-  barcode?: string | null;
-  /** @nullable */
-  brand?: string | null;
+  /** @minimum 0.1 */
+  defaultServingAmount?: number;
   supermarket?: Supermarket | null;
-  createdAt: string;
-  updatedAt: string;
 }

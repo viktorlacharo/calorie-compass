@@ -6,7 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { BarcodeLookupItem } from './barcodeLookupItem';
+import type { GetFoodByBarcode200Status } from './getFoodByBarcode200Status';
 
 export interface GetFoodByBarcode200 {
+  status: GetFoodByBarcode200Status;
   item: BarcodeLookupItem;
 }
