@@ -18,6 +18,7 @@ export * from './createFavoriteDishRequest';
 export * from './createFood201';
 export * from './createFoodConflictResponse';
 export * from './createFoodRequest';
+export * from './deleteFavorite200';
 export * from './errorResponse';
 export * from './favoriteDish';
 export * from './favoriteDishDifficulty';

@@ -54,3 +54,11 @@ export async function createFavoriteDish(input: CreateFavoriteDishInput) {
     return cloneFavoriteDish(newDish);
   });
 }
+
+export async function deleteFavoriteDish(id: string) {
+  return simulateFoodsRequest(() => {
+    const exists = favoriteDishesStore.some((entry) => entry.id === id);
+    if (!exists) throw new Error(`Favorite not found: ${id}`);
+    favoriteDishesStore = favoriteDishesStore.filter((entry) => entry.id !== id);
+  });
+}

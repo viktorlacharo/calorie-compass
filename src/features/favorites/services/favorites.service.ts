@@ -1,4 +1,4 @@
-import { createFavorite as createFavoriteAws, getFavoriteById as getFavoriteByIdAws, getFavorites as getFavoritesAws } from '@/lib/api/generated/aws-api';
+import { createFavorite as createFavoriteAws, deleteFavorite as deleteFavoriteAws, getFavoriteById as getFavoriteByIdAws, getFavorites as getFavoritesAws } from '@/lib/api/generated/aws-api';
 import type { CreateFavoriteDishInput } from '@/features/favorites/domain/favorite.contracts';
 import type { FavoriteDish } from '@/types/nutrition';
 
@@ -26,4 +26,8 @@ export async function createFavoriteDish(input: CreateFavoriteDishInput): Promis
   });
 
   return response.item as FavoriteDish;
+}
+
+export async function deleteFavoriteDish(id: string): Promise<void> {
+  await deleteFavoriteAws(id);
 }

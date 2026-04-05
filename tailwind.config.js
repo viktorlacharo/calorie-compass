@@ -22,7 +22,7 @@ module.exports = {
           dark: "#C94709",
           soft: "#F28B55",
         },
-        protein: "#EC5B13",
+        protein: "#4ADE80",
         carbs: "#60A5FA",
         fat: "#FBBF24",
         forest: {
