@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CreateFavoriteDishInput } from '@/features/favorites/domain/favorite.contracts';
-import { createFavoriteDish } from '@/features/favorites/services/favorites.mock-backend';
+import { createFavoriteDish } from '@/features/favorites/services/favorites.service';
 import { favoritesQueryKeys } from '@/features/favorites/queries/favorites.query-keys';
 
 export function useCreateFavoriteMutation() {

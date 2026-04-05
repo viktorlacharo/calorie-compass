@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getFavoriteDishById, listFavoriteDishes } from '@/features/favorites/services/favorites.mock-backend';
+import { getFavoriteDishById, listFavoriteDishes } from '@/features/favorites/services/favorites.service';
 import { favoritesQueryKeys } from '@/features/favorites/queries/favorites.query-keys';
 
 export function useFavoritesQuery() {

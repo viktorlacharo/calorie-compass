@@ -148,6 +148,83 @@ paths:
           $ref: '#/components/responses/InternalServerError'
         '504':
           $ref: '#/components/responses/GatewayTimeout'
+  /favorites:
+    get:
+      operationId: getFavorites
+      summary: Lists favorite recipes for authenticated user
+      responses:
+        '200':
+          description: User favorite recipes
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FavoriteDish'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      operationId: createFavorite
+      summary: Creates a favorite recipe for authenticated user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFavoriteDishRequest'
+      responses:
+        '201':
+          description: Favorite recipe created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - item
+                properties:
+                  item:
+                    $ref: '#/components/schemas/FavoriteDish'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /favorites/{id}:
+    get:
+      operationId: getFavoriteById
+      summary: Gets favorite recipe detail for authenticated user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Favorite recipe detail
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - item
+                properties:
+                  item:
+                    $ref: '#/components/schemas/FavoriteDish'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 components:
   securitySchemes:
@@ -254,6 +331,113 @@ components:
       type: string
       enum:
         - g
+
+    FavoriteDishDifficulty:
+      type: string
+      enum:
+        - Facil
+        - Media
+        - Alta
+
+    FavoriteDishItem:
+      type: object
+      required:
+        - foodId
+        - quantity
+      properties:
+        foodId:
+          type: string
+        quantity:
+          type: number
+          minimum: 0.1
+
+    FavoriteDish:
+      type: object
+      required:
+        - id
+        - userId
+        - name
+        - description
+        - imageUri
+        - prepMinutes
+        - difficulty
+        - servings
+        - tags
+        - steps
+        - items
+        - createdAt
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        imageUri:
+          type: string
+        prepMinutes:
+          type: number
+        difficulty:
+          $ref: '#/components/schemas/FavoriteDishDifficulty'
+        servings:
+          type: number
+        tags:
+          type: array
+          items:
+            type: string
+        steps:
+          type: array
+          items:
+            type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FavoriteDishItem'
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateFavoriteDishRequest:
+      type: object
+      required:
+        - name
+        - description
+        - imageUri
+        - prepMinutes
+        - difficulty
+        - servings
+        - tags
+        - steps
+        - items
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        imageUri:
+          type: string
+        prepMinutes:
+          type: number
+          minimum: 0
+        difficulty:
+          $ref: '#/components/schemas/FavoriteDishDifficulty'
+        servings:
+          type: number
+          minimum: 0.1
+        tags:
+          type: array
+          items:
+            type: string
+        steps:
+          type: array
+          items:
+            type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FavoriteDishItem'
 
     Food:
       type: object

@@ -24,6 +24,10 @@ export default function FoodDetailScreen() {
   const deleteFoodMutation = useDeleteFoodMutation();
   const { data: food, isLoading } = useFoodQuery(id);
 
+  function handleBackToFoods() {
+    router.replace('/(tabs)/foods');
+  }
+
   if (!food) {
     return (
       <SafeAreaView className="flex-1 bg-canvas" edges={['top']}>
@@ -33,7 +37,7 @@ export default function FoodDetailScreen() {
           <>
             <View className="flex-row items-center border-b border-border bg-surface px-4 py-3">
               <Pressable
-                onPress={() => router.back()}
+                onPress={handleBackToFoods}
                 className="mr-3 h-9 w-9 items-center justify-center rounded-sm active:bg-canvas"
                 accessibilityRole="button"
                 accessibilityLabel="Volver atras"
@@ -79,14 +83,14 @@ export default function FoodDetailScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-canvas" edges={['top']}>
-      <View className="flex-row items-center justify-between border-b border-border bg-surface px-4 py-3">
-        <View className="flex-row items-center">
-          <Pressable
-            onPress={() => router.back()}
-            className="mr-3 h-9 w-9 items-center justify-center rounded-sm active:bg-canvas"
-            accessibilityRole="button"
-            accessibilityLabel="Volver atras"
-          >
+        <View className="flex-row items-center justify-between border-b border-border bg-surface px-4 py-3">
+          <View className="flex-row items-center">
+            <Pressable
+              onPress={handleBackToFoods}
+              className="mr-3 h-9 w-9 items-center justify-center rounded-sm active:bg-canvas"
+              accessibilityRole="button"
+              accessibilityLabel="Volver atras"
+            >
             <ArrowLeft size={18} color="#F5F7F2" strokeWidth={1.6} />
           </Pressable>
           <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">

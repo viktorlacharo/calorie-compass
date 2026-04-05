@@ -1,10 +1,21 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Camera, Check, ChevronRight, Link2, Plus, Sparkles, Trash2 } from 'lucide-react-native';
-import { SUPERMARKETS } from '@/constants/supermarkets';
+import Animated, {
+  Easing,
+  FadeIn,
+  FadeInDown,
+  FadeOut,
+  FadeOutDown,
+  FadeOutUp,
+  LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { ArrowLeft, Camera, Check, Link2, Plus, Search, Sparkles, Trash2, X } from 'lucide-react-native';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -22,7 +33,106 @@ import {
   getFoodDefaultServingAmount,
 } from '@/utils/foodMeasurements';
 import { sumMacros } from '@/utils/sumMacros';
-import type { AiRecipeDraft, Food, MacroNutrients, Supermarket } from '@/types/nutrition';
+import type { AiRecipeDraft, Food, MacroNutrients } from '@/types/nutrition';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Animation config — Telegram style: fast, no bounce, ease-out cubic
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ANIM = {
+  fast: { duration: 120, easing: Easing.out(Easing.cubic) },
+  normal: { duration: 160, easing: Easing.out(Easing.cubic) },
+  enter: { duration: 180, easing: Easing.out(Easing.cubic) },
+} as const;
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+/** Presión sutil: scale 0.97 → 1, sin bounce */
+function ScalePressable({
+  onPress,
+  children,
+  className,
+  accessibilityRole,
+  accessibilityLabel,
+  hitSlop,
+}: {
+  onPress: () => void;
+  children: React.ReactNode;
+  className?: string;
+  accessibilityRole?: 'button';
+  accessibilityLabel?: string;
+  hitSlop?: number;
+}) {
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <AnimatedPressable
+      style={animStyle}
+      onPressIn={() => { scale.value = withTiming(0.97, ANIM.fast); }}
+      onPressOut={() => { scale.value = withTiming(1, ANIM.fast); }}
+      onPress={onPress}
+      className={className}
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={accessibilityLabel}
+      hitSlop={hitSlop}
+    >
+      {children}
+    </AnimatedPressable>
+  );
+}
+
+/** Botón de eliminar con feedback de opacidad rápido */
+function DeleteButton({ onPress, accessibilityLabel }: { onPress: () => void; accessibilityLabel: string }) {
+  const opacity = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+  function handlePress() {
+    opacity.value = withTiming(0.5, { duration: 60, easing: Easing.out(Easing.cubic) });
+    setTimeout(() => { opacity.value = withTiming(1, ANIM.fast); }, 60);
+    onPress();
+  }
+
+  return (
+    <AnimatedPressable
+      style={animStyle}
+      onPress={handlePress}
+      className="ml-1 h-8 w-8 shrink-0 items-center justify-center rounded-full bg-canvas active:bg-forest-panelAlt"
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      hitSlop={8}
+    >
+      <X size={13} color="#70806E" strokeWidth={2} />
+    </AnimatedPressable>
+  );
+}
+
+/** Botón añadir ingrediente con scale suave */
+function AddIngredientButton({ onPress }: { onPress: () => void }) {
+  const scale = useSharedValue(1);
+  const containerStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <AnimatedPressable
+      style={containerStyle}
+      onPressIn={() => { scale.value = withTiming(0.97, ANIM.fast); }}
+      onPressOut={() => { scale.value = withTiming(1, ANIM.fast); }}
+      onPress={onPress}
+      className="mt-3 flex-row items-center gap-3 rounded-[20px] border border-dashed border-border px-4 py-3.5"
+      accessibilityRole="button"
+      accessibilityLabel="Anadir ingrediente"
+    >
+      <View className="h-7 w-7 items-center justify-center rounded-full bg-brand/10">
+        <Plus size={13} color="#EC5B13" strokeWidth={2.5} />
+      </View>
+      <Text className="font-sans-medium text-sm text-secondary">Anadir ingrediente</Text>
+    </AnimatedPressable>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
 
 type DishItem = {
   food: Food;
@@ -74,6 +184,10 @@ function resolveDraftItems(draft: AiRecipeDraft, foods: Food[]) {
     .filter((item): item is DishItem => Boolean(item));
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Screen
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function CreateFavoriteScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -85,11 +199,26 @@ export default function CreateFavoriteScreen() {
   const [name, setName] = useState('');
   const [items, setItems] = useState<DishItem[]>([]);
   const [showFoodPicker, setShowFoodPicker] = useState(false);
+  const [foodSearch, setFoodSearch] = useState('');
+  const searchInputRef = useRef<TextInput>(null);
   const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [supermarket, setSupermarket] = useState<Supermarket | null>(null);
   const [hydratedDraftId, setHydratedDraftId] = useState<string | null>(null);
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [tagDraft, setTagDraft] = useState('');
+
+  // badge pulse cuando se añade un ingrediente
+  const badgeScale = useSharedValue(1);
+  const prevItemCount = useRef(0);
+
+  useEffect(() => {
+    if (items.length > prevItemCount.current) {
+      badgeScale.value = withTiming(1.15, { duration: 100, easing: Easing.out(Easing.cubic) });
+      setTimeout(() => { badgeScale.value = withTiming(1, ANIM.fast); }, 100);
+    }
+    prevItemCount.current = items.length;
+  }, [items.length]);
+
+  const badgeStyle = useAnimatedStyle(() => ({ transform: [{ scale: badgeScale.value }] }));
 
   useEffect(() => {
     if (!aiRecipeDraft) {
@@ -128,6 +257,7 @@ export default function CreateFavoriteScreen() {
   function addFood(food: Food) {
     setItems((prev) => [...prev, { food, quantity: getFoodDefaultServingAmount(food) }]);
     setShowFoodPicker(false);
+    setFoodSearch('');
   }
 
   function removeFood(index: number) {
@@ -210,10 +340,17 @@ export default function CreateFavoriteScreen() {
     setCustomTags([]);
     setTagDraft('');
     setShowFoodPicker(false);
+    setFoodSearch('');
     Alert.alert('Borrador descartado', 'La propuesta AI se ha quitado y puedes seguir creando la receta manualmente.');
   }
 
   const availableFoods = foods.filter((f) => !items.some((i) => i.food.id === f.id));
+
+  const filteredFoods = useMemo(() => {
+    const query = foodSearch.trim().toLowerCase();
+    if (!query) return availableFoods;
+    return availableFoods.filter((f) => f.name.toLowerCase().includes(query));
+  }, [availableFoods, foodSearch]);
 
   return (
     <SafeAreaView className="flex-1 bg-canvas" edges={['top']}>
@@ -337,45 +474,262 @@ export default function CreateFavoriteScreen() {
                 accessibilityLabelledBy="dish-name"
                 accessibilityLabel="Nombre de la receta"
               />
+            </ScreenTransition>
 
-              <View className="mt-5 flex-row items-center justify-between">
-                <Label nativeID="dish-store">Supermercado habitual</Label>
-                <Pressable
-                  onPress={() => setSupermarket(null)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Quitar supermercado seleccionado"
+            <ScreenTransition delay={80} className="px-5">
+              {/* ── Sección header ── */}
+              <View className="mt-6 flex-row items-center justify-between">
+                <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">Ingredientes</Text>
+                {items.length > 0 && (
+                  <Animated.View
+                    style={badgeStyle}
+                    className="rounded-full bg-forest-panelAlt px-2.5 py-1"
+                  >
+                    <Text className="font-mono text-[10px] tabular-nums text-brand">
+                      {items.length} {items.length === 1 ? 'item' : 'items'}
+                    </Text>
+                  </Animated.View>
+                )}
+              </View>
+
+              {/* ── Alerta ingredientes sin resolver ── */}
+              {unresolvedIngredients.length > 0 ? (
+                <Animated.View
+                  entering={FadeInDown.duration(160)}
+                  exiting={FadeOut.duration(120)}
+                  className="mt-3 rounded-[20px] border border-brand/30 bg-brand/8 px-4 py-4"
                 >
-                  <Text className="font-sans-medium text-xs text-secondary">Opcional</Text>
-                </Pressable>
-              </View>
+                  <Text className="font-sans-medium text-sm text-primary">Ingredientes sin resolver</Text>
+                  <Text className="mt-1.5 font-sans text-sm leading-6 text-secondary">
+                    Crea estos alimentos antes de guardar: {unresolvedIngredients.join(', ')}.
+                  </Text>
+                  <Button
+                    variant="outline"
+                    className="mt-3"
+                    onPress={() => router.push('/food/add')}
+                    accessibilityLabel="Anadir alimento base pendiente"
+                  >
+                    <UIText>Anadir alimento base</UIText>
+                  </Button>
+                </Animated.View>
+              ) : null}
 
-              <View className="mt-3 flex-row flex-wrap gap-3">
-                {SUPERMARKETS.map((store) => {
-                  const isActive = supermarket === store.id;
+              {/* ── Lista de ingredientes con layout animado ── */}
+              {items.length === 0 && !showFoodPicker ? (
+                <Animated.View
+                  entering={FadeIn.duration(140)}
+                  exiting={FadeOut.duration(100)}
+                  className="mt-3 items-center rounded-[20px] border border-dashed border-border py-8"
+                >
+                  <Text className="font-sans text-sm text-muted">Sin ingredientes todavia</Text>
+                  <Text className="mt-1 font-sans text-xs text-muted">Pulsa el boton para anadir</Text>
+                </Animated.View>
+              ) : (
+                <Animated.View
+                  layout={LinearTransition.duration(160)}
+                  className="mt-3 gap-2.5"
+                >
+                  {items.map((item, index) => {
+                    const servingMacros = calculateFoodServingMacros(item.food, item.quantity);
+                    return (
+                      <Animated.View
+                        key={item.food.id}
+                        entering={FadeInDown.duration(150)}
+                        exiting={FadeOutUp.duration(120)}
+                        layout={LinearTransition.duration(160)}
+                        className="overflow-hidden rounded-[20px] border border-border bg-surface/90"
+                      >
+                        {/* Franja superior */}
+                        <View className="h-px bg-forest-line" />
 
-                  return (
-                    <Pressable
-                      key={store.id}
-                      onPress={() => setSupermarket((current) => (current === store.id ? null : store.id))}
-                      className={`min-w-[31%] flex-1 rounded-[24px] border px-3 py-3 ${isActive ? 'border-brand bg-forest-panelAlt' : 'border-border bg-surface/90'}`}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Seleccionar ${store.label}`}
-                    >
-                      <View className="items-center gap-2">
-                        <View className="h-12 w-12 items-center justify-center rounded-full bg-white/90">
-                          <Image source={store.logo} className="h-7 w-7" resizeMode="contain" />
+                        <View className="flex-row items-center gap-3 px-4 py-4">
+                          {/* Índice numérico */}
+                          <View className="h-7 w-7 shrink-0 items-center justify-center rounded-full bg-forest-panelAlt">
+                            <Text className="font-mono text-[11px] text-secondary">{index + 1}</Text>
+                          </View>
+
+                          {/* Nombre + resumen de macros */}
+                          <View className="min-w-0 flex-1">
+                            <Text className="font-sans-medium text-sm text-primary" numberOfLines={1}>
+                              {item.food.name}
+                            </Text>
+                            <View className="mt-1 flex-row items-center gap-2">
+                              <Text className="font-mono text-[11px] tabular-nums text-brand">
+                                {Math.round(servingMacros.calories)} kcal
+                              </Text>
+                              <View className="h-3 w-px bg-border" />
+                              <Text className="font-mono text-[11px] tabular-nums text-protein">
+                                {servingMacros.protein.toFixed(1)}g P
+                              </Text>
+                              <View className="h-3 w-px bg-border" />
+                              <Text className="font-mono text-[11px] tabular-nums text-carbs">
+                                {servingMacros.carbs.toFixed(1)}g C
+                              </Text>
+                            </View>
+                          </View>
+
+                          {/* Input de cantidad */}
+                          <View className="shrink-0 flex-row items-center gap-1.5">
+                            <Input
+                              value={String(item.quantity)}
+                              onChangeText={(value) => updateQuantity(index, value)}
+                              className="h-9 w-16 px-2 text-center text-sm"
+                              inputMode="decimal"
+                              accessibilityLabel={`Cantidad para ${item.food.name}`}
+                            />
+                            <Text className="font-sans text-xs text-muted">g</Text>
+                          </View>
+
+                          {/* Botón eliminar con shake */}
+                          <DeleteButton
+                            onPress={() => removeFood(index)}
+                            accessibilityLabel={`Quitar ${item.food.name}`}
+                          />
                         </View>
-                        <Text className="font-sans text-[11px] uppercase tracking-[1.1px] text-secondary">{store.label}</Text>
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </View>
+                      </Animated.View>
+                    );
+                  })}
+                </Animated.View>
+              )}
+
+              {/* ── Botón añadir ingrediente con icono rotante ── */}
+              {!showFoodPicker && (
+                <AddIngredientButton onPress={() => { setFoodSearch(''); setShowFoodPicker(true); }} />
+              )}
+
+              {/* ── Food picker con slide animado ── */}
+              {showFoodPicker && (
+                <Animated.View
+                  entering={FadeInDown.duration(160)}
+                  exiting={FadeOutUp.duration(120)}
+                  className="mt-3 overflow-hidden rounded-[20px] border border-brand/40 bg-forest-panelAlt"
+                >
+                  {/* Header */}
+                  <View className="flex-row items-center justify-between border-b border-border px-4 py-3">
+                    <View className="flex-row items-center gap-2">
+                      <Animated.View
+                        entering={FadeIn.duration(120).delay(60)}
+                        className="h-5 w-5 items-center justify-center rounded-full bg-brand/15"
+                      >
+                        <Plus size={11} color="#EC5B13" strokeWidth={2.5} />
+                      </Animated.View>
+                      <Text className="font-sans text-[11px] tracking-widest uppercase text-secondary">
+                        Elegir alimento
+                      </Text>
+                      {availableFoods.length > 0 && (
+                        <Animated.View
+                          entering={FadeIn.duration(120).delay(40)}
+                          className="rounded-full bg-surface px-2 py-0.5"
+                        >
+                          <Text className="font-mono text-[10px] tabular-nums text-muted">
+                            {filteredFoods.length}
+                            {foodSearch.trim() ? `/${availableFoods.length}` : ''}
+                          </Text>
+                        </Animated.View>
+                      )}
+                    </View>
+                    <ScalePressable
+                      onPress={() => { setShowFoodPicker(false); setFoodSearch(''); }}
+                      className="h-7 w-7 items-center justify-center rounded-full bg-surface"
+                      accessibilityRole="button"
+                      accessibilityLabel="Cancelar seleccion"
+                      hitSlop={8}
+                    >
+                      <X size={13} color="#A9B8A8" strokeWidth={2} />
+                    </ScalePressable>
+                  </View>
+
+                  {/* Buscador */}
+                  <Animated.View
+                    entering={FadeIn.duration(120).delay(30)}
+                    className="border-b border-border px-4 py-2.5"
+                  >
+                    <View className="flex-row items-center gap-2.5 rounded-[12px] bg-surface px-3 py-2">
+                      <Search size={13} color="#70806E" strokeWidth={2} />
+                      <TextInput
+                        ref={searchInputRef}
+                        value={foodSearch}
+                        onChangeText={setFoodSearch}
+                        placeholder="Buscar alimento..."
+                        placeholderTextColor="#4A5A49"
+                        autoCorrect={false}
+                        autoCapitalize="none"
+                        returnKeyType="search"
+                        className="flex-1 font-sans text-sm text-primary"
+                        style={{ height: 24, padding: 0 }}
+                        accessibilityLabel="Buscar alimento"
+                      />
+                      {foodSearch.length > 0 && (
+                        <Animated.View entering={FadeIn.duration(100)} exiting={FadeOut.duration(80)}>
+                          <Pressable
+                            onPress={() => setFoodSearch('')}
+                            hitSlop={6}
+                            accessibilityLabel="Limpiar busqueda"
+                          >
+                            <X size={12} color="#70806E" strokeWidth={2} />
+                          </Pressable>
+                        </Animated.View>
+                      )}
+                    </View>
+                  </Animated.View>
+
+                  {/* Listado filtrado */}
+                  {filteredFoods.length === 0 ? (
+                    <Animated.View
+                      entering={FadeIn.duration(120)}
+                      className="items-center px-4 py-8"
+                    >
+                      {availableFoods.length === 0 ? (
+                        <Text className="font-sans text-sm text-muted">Todos los alimentos añadidos</Text>
+                      ) : (
+                        <>
+                          <Text className="font-sans text-sm text-muted">Sin resultados para</Text>
+                          <Text className="mt-0.5 font-sans-medium text-sm text-secondary">"{foodSearch}"</Text>
+                        </>
+                      )}
+                    </Animated.View>
+                  ) : (
+                    filteredFoods.map((food, index) => {
+                      const defaultMacros = calculateFoodServingMacros(food, getFoodDefaultServingAmount(food));
+                      return (
+                        <Animated.View
+                          key={food.id}
+                          entering={FadeIn.duration(120).delay(index * 20)}
+                        >
+                          <ScalePressable
+                            onPress={() => addFood(food)}
+                            className={`flex-row items-center justify-between px-4 py-3.5 ${index > 0 ? 'border-t border-border' : ''}`}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Seleccionar ${food.name}`}
+                          >
+                            <View className="min-w-0 flex-1">
+                              <Text className="font-sans-medium text-sm text-primary" numberOfLines={1}>
+                                {food.name}
+                              </Text>
+                              <View className="mt-0.5 flex-row items-center gap-2">
+                                <Text className="font-mono text-[10px] tabular-nums text-brand">
+                                  {Math.round(defaultMacros.calories)} kcal
+                                </Text>
+                                <Text className="font-sans text-[10px] text-muted">
+                                  / {food.defaultServingAmount ?? food.referenceAmount}g
+                                </Text>
+                              </View>
+                            </View>
+                            <View className="ml-3 h-7 w-7 shrink-0 items-center justify-center rounded-full border border-brand/30 bg-brand/8">
+                              <Plus size={13} color="#EC5B13" strokeWidth={2.5} />
+                            </View>
+                          </ScalePressable>
+                        </Animated.View>
+                      );
+                    })
+                  )}
+                </Animated.View>
+              )}
             </ScreenTransition>
 
             <Separator className="mx-5 my-4" />
 
-            <ScreenTransition delay={70} className="px-5">
+            <ScreenTransition delay={100} className="px-5">
               <View className="flex-row items-center justify-between">
                 <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">TAGS PERSONALIZADAS</Text>
                 <Text className="font-sans text-xs text-secondary">Opcional</Text>
@@ -402,133 +756,41 @@ export default function CreateFavoriteScreen() {
               </View>
 
               {customTags.length > 0 ? (
-                <View className="mt-4 flex-row flex-wrap gap-2">
-                  {customTags.map((tag) => (
-                    <Pressable
-                      key={tag}
-                      onPress={() => removeCustomTag(tag)}
-                      className="rounded-full border border-border bg-forest-panelAlt px-3 py-2"
-                      accessibilityRole="button"
-                      accessibilityLabel={`Quitar tag ${tag}`}
-                    >
-                      <View className="flex-row items-center gap-2">
-                        <Text className="font-sans text-xs text-primary">{tag}</Text>
-                        <Trash2 size={12} color="#F5F7F2" strokeWidth={2} />
-                      </View>
-                    </Pressable>
-                  ))}
-                </View>
-              ) : null}
-            </ScreenTransition>
-
-            <ScreenTransition delay={80} className="px-5">
-              <View className="flex-row items-center mt-4 justify-between">
-                <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">INGREDIENTES</Text>
-                <Text className="font-mono text-[10px] tabular-nums text-muted">
-                  {items.length} {items.length === 1 ? 'ingrediente' : 'ingredientes'}
-                </Text>
-              </View>
-
-              <View className="mt-3 rounded-[26px] border border-border bg-surface/75 px-4 py-4">
-                <Text className="font-sans text-sm leading-6 text-secondary">
-                  Anade los ingredientes que vas a repetir con frecuencia. Asi el registro sera rapido y mantendra la misma logica de macros siempre.
-                </Text>
-              </View>
-
-              {unresolvedIngredients.length > 0 ? (
-                <View className="mt-3 rounded-[26px] border border-border bg-brand/10 px-4 py-4">
-                  <Text className="font-sans-medium text-sm text-primary">Ingredientes pendientes por resolver</Text>
-                  <Text className="mt-2 font-sans text-sm leading-6 text-secondary">
-                    Antes de guardar la receta, crea o vincula estos alimentos en tu base: {unresolvedIngredients.join(', ')}.
-                  </Text>
-                  <Button
-                    variant="outline"
-                    className="mt-4"
-                    onPress={() => router.push('/food/add')}
-                    accessibilityLabel="Anadir alimento base pendiente"
-                  >
-                    <UIText>Anadir alimento base</UIText>
-                  </Button>
-                </View>
-              ) : null}
-
-              {items.map((item, index) => (
-                <GlassPanel key={item.food.id} className="mt-3 px-5 py-5">
-                  <View className="flex-row items-start gap-3">
-                    <View className="flex-1">
-                      <Text className="font-sans-medium text-sm text-primary" numberOfLines={1}>
-                        {item.food.name}
-                      </Text>
-                      <View className="mt-2 flex-row items-center gap-2">
-                        <Input
-                          value={String(item.quantity)}
-                          onChangeText={(value) => updateQuantity(index, value)}
-                          className="h-10 w-20 px-3 text-sm"
-                          inputMode="decimal"
-                          accessibilityLabel={`Cantidad para ${item.food.name}`}
-                        />
-                        <Text className="font-sans text-xs text-secondary">g</Text>
-                      </View>
-                    </View>
-                    <Pressable
-                      onPress={() => removeFood(index)}
-                      className="ml-2 h-10 w-10 items-center justify-center rounded-full bg-fat/10"
-                      accessibilityRole="button"
-                      accessibilityLabel={`Quitar ${item.food.name}`}
-                    >
-                      <Plus size={14} color="#FBBF24" strokeWidth={2} style={{ transform: [{ rotate: '45deg' }] }} />
-                    </Pressable>
-                  </View>
-                </GlassPanel>
-              ))}
-
-              {!showFoodPicker && (
-                <Pressable
-                  onPress={() => setShowFoodPicker(true)}
-                  className="mt-3 flex-row items-center justify-center gap-2 rounded-[24px] border border-dashed border-border py-4 active:bg-surface"
-                  accessibilityRole="button"
-                  accessibilityLabel="Anadir ingrediente"
+                <Animated.View
+                  layout={LinearTransition.duration(140)}
+                  className="mt-4 flex-row flex-wrap gap-2"
                 >
-                  <Plus size={14} color="#78716C" strokeWidth={2} />
-                  <Text className="font-sans-medium text-xs text-secondary">Anadir ingrediente</Text>
-                </Pressable>
-              )}
-
-              {showFoodPicker && (
-                <GlassPanel className="mt-3 px-4 py-4">
-                  <View className="flex-row items-center justify-between">
-                    <Text className="font-sans text-[10px] tracking-widest uppercase text-muted">ELIGE UN ALIMENTO</Text>
-                    <Pressable onPress={() => setShowFoodPicker(false)} accessibilityRole="button" accessibilityLabel="Cancelar seleccion">
-                      <Text className="font-sans-medium text-xs text-secondary">Cancelar</Text>
-                    </Pressable>
-                  </View>
-
-                  {availableFoods.length === 0 ? (
-                    <View className="px-3 py-4">
-                      <Text className="text-center font-sans text-xs text-muted">Ya has anadido todos los alimentos</Text>
-                    </View>
-                  ) : (
-                    availableFoods.map((food, index) => (
+                  {customTags.map((tag) => (
+                    <Animated.View
+                      key={tag}
+                      entering={FadeIn.duration(120)}
+                      exiting={FadeOut.duration(100)}
+                      layout={LinearTransition.duration(140)}
+                    >
                       <Pressable
-                        key={food.id}
-                        onPress={() => addFood(food)}
-                        className={`flex-row items-center justify-between px-2 py-3 active:bg-canvas ${index === 0 ? 'mt-3' : 'border-t border-border'}`}
+                        onPress={() => removeCustomTag(tag)}
+                        className="rounded-full border border-border bg-forest-panelAlt px-3 py-2"
                         accessibilityRole="button"
-                        accessibilityLabel={`Seleccionar ${food.name}`}
+                        accessibilityLabel={`Quitar tag ${tag}`}
                       >
-                        <Text className="font-sans text-sm text-primary">{food.name}</Text>
-                        <ChevronRight size={14} color="#78716C" strokeWidth={2} />
+                        <View className="flex-row items-center gap-2">
+                          <Text className="font-sans text-xs text-primary">{tag}</Text>
+                          <Trash2 size={12} color="#F5F7F2" strokeWidth={2} />
+                        </View>
                       </Pressable>
-                    ))
-                  )}
-                </GlassPanel>
-              )}
+                    </Animated.View>
+                  ))}
+                </Animated.View>
+              ) : null}
             </ScreenTransition>
 
             {items.length > 0 ? (
               <>
                 <Separator className="mx-5 my-4" />
-                <ScreenTransition delay={120} className="px-5">
+                <Animated.View
+                  entering={FadeInDown.duration(160)}
+                  className="px-5"
+                >
                   <Text className="font-sans text-[10px] tracking-widest uppercase text-secondary">TOTAL NUTRICIONAL</Text>
                   <View className="mt-4 border-b border-border pb-4">
                     <Text className="font-sans text-[10px] uppercase tracking-[1.4px] text-secondary">Calorias estimadas</Text>
@@ -536,7 +798,7 @@ export default function CreateFavoriteScreen() {
                     <Text className="font-sans text-[11px] uppercase tracking-[1.3px] text-brand">kcal de la receta</Text>
                   </View>
                   <NutritionGrid macros={totalMacros} size="sm" className="mt-3" />
-                </ScreenTransition>
+                </Animated.View>
               </>
             ) : null}
           </>

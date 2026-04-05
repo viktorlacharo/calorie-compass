@@ -28,9 +28,13 @@ import type {
   BadRequestResponse,
   BarcodeLookupExistsResponse,
   ConflictResponse,
+  CreateFavorite201,
+  CreateFavoriteDishRequest,
   CreateFood201,
   CreateFoodRequest,
   GatewayTimeoutResponse,
+  GetFavoriteById200,
+  GetFavorites200,
   GetFoodByBarcode200 as __GetFoodByBarcode200,
   GetFoodByBarcode422,
   GetFoods200,
@@ -440,6 +444,252 @@ export function useGetFoodByBarcode<TData = Awaited<ReturnType<typeof getFoodByB
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetFoodByBarcodeQueryOptions(barcode,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
+ * @summary Lists favorite recipes for authenticated user
+ */
+export const getFavorites = (
+    
+ options?: SecondParameter<typeof orvalHttpClient>,signal?: AbortSignal
+) => {
+      
+      
+      return orvalHttpClient<GetFavorites200>(
+      {url: `/favorites`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getGetFavoritesQueryKey = () => {
+    return [
+    `/favorites`
+    ] as const;
+    }
+
+    
+export const getGetFavoritesQueryOptions = <TData = Awaited<ReturnType<typeof getFavorites>>, TError = ErrorType<UnauthorizedResponse | InternalServerErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFavorites>>, TError, TData>>, request?: SecondParameter<typeof orvalHttpClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFavoritesQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFavorites>>> = ({ signal }) => getFavorites(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFavorites>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetFavoritesQueryResult = NonNullable<Awaited<ReturnType<typeof getFavorites>>>
+export type GetFavoritesQueryError = ErrorType<UnauthorizedResponse | InternalServerErrorResponse>
+
+
+export function useGetFavorites<TData = Awaited<ReturnType<typeof getFavorites>>, TError = ErrorType<UnauthorizedResponse | InternalServerErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFavorites>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFavorites>>,
+          TError,
+          Awaited<ReturnType<typeof getFavorites>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalHttpClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFavorites<TData = Awaited<ReturnType<typeof getFavorites>>, TError = ErrorType<UnauthorizedResponse | InternalServerErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFavorites>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFavorites>>,
+          TError,
+          Awaited<ReturnType<typeof getFavorites>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalHttpClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFavorites<TData = Awaited<ReturnType<typeof getFavorites>>, TError = ErrorType<UnauthorizedResponse | InternalServerErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFavorites>>, TError, TData>>, request?: SecondParameter<typeof orvalHttpClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Lists favorite recipes for authenticated user
+ */
+
+export function useGetFavorites<TData = Awaited<ReturnType<typeof getFavorites>>, TError = ErrorType<UnauthorizedResponse | InternalServerErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFavorites>>, TError, TData>>, request?: SecondParameter<typeof orvalHttpClient>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetFavoritesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
+ * @summary Creates a favorite recipe for authenticated user
+ */
+export const createFavorite = (
+    createFavoriteDishRequest: BodyType<CreateFavoriteDishRequest>,
+ options?: SecondParameter<typeof orvalHttpClient>,signal?: AbortSignal
+) => {
+      
+      
+      return orvalHttpClient<CreateFavorite201>(
+      {url: `/favorites`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createFavoriteDishRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getCreateFavoriteMutationOptions = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | InternalServerErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFavorite>>, TError,{data: BodyType<CreateFavoriteDishRequest>}, TContext>, request?: SecondParameter<typeof orvalHttpClient>}
+): UseMutationOptions<Awaited<ReturnType<typeof createFavorite>>, TError,{data: BodyType<CreateFavoriteDishRequest>}, TContext> => {
+
+const mutationKey = ['createFavorite'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createFavorite>>, {data: BodyType<CreateFavoriteDishRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createFavorite(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateFavoriteMutationResult = NonNullable<Awaited<ReturnType<typeof createFavorite>>>
+    export type CreateFavoriteMutationBody = BodyType<CreateFavoriteDishRequest>
+    export type CreateFavoriteMutationError = ErrorType<BadRequestResponse | UnauthorizedResponse | InternalServerErrorResponse>
+
+    /**
+ * @summary Creates a favorite recipe for authenticated user
+ */
+export const useCreateFavorite = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | InternalServerErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFavorite>>, TError,{data: BodyType<CreateFavoriteDishRequest>}, TContext>, request?: SecondParameter<typeof orvalHttpClient>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createFavorite>>,
+        TError,
+        {data: BodyType<CreateFavoriteDishRequest>},
+        TContext
+      > => {
+      return useMutation(getCreateFavoriteMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Gets favorite recipe detail for authenticated user
+ */
+export const getFavoriteById = (
+    id: string,
+ options?: SecondParameter<typeof orvalHttpClient>,signal?: AbortSignal
+) => {
+      
+      
+      return orvalHttpClient<GetFavoriteById200>(
+      {url: `/favorites/${id}`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getGetFavoriteByIdQueryKey = (id: string,) => {
+    return [
+    `/favorites/${id}`
+    ] as const;
+    }
+
+    
+export const getGetFavoriteByIdQueryOptions = <TData = Awaited<ReturnType<typeof getFavoriteById>>, TError = ErrorType<UnauthorizedResponse | NotFoundResponse | InternalServerErrorResponse>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFavoriteById>>, TError, TData>>, request?: SecondParameter<typeof orvalHttpClient>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFavoriteByIdQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFavoriteById>>> = ({ signal }) => getFavoriteById(id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFavoriteById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetFavoriteByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getFavoriteById>>>
+export type GetFavoriteByIdQueryError = ErrorType<UnauthorizedResponse | NotFoundResponse | InternalServerErrorResponse>
+
+
+export function useGetFavoriteById<TData = Awaited<ReturnType<typeof getFavoriteById>>, TError = ErrorType<UnauthorizedResponse | NotFoundResponse | InternalServerErrorResponse>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFavoriteById>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFavoriteById>>,
+          TError,
+          Awaited<ReturnType<typeof getFavoriteById>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalHttpClient>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFavoriteById<TData = Awaited<ReturnType<typeof getFavoriteById>>, TError = ErrorType<UnauthorizedResponse | NotFoundResponse | InternalServerErrorResponse>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFavoriteById>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFavoriteById>>,
+          TError,
+          Awaited<ReturnType<typeof getFavoriteById>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalHttpClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFavoriteById<TData = Awaited<ReturnType<typeof getFavoriteById>>, TError = ErrorType<UnauthorizedResponse | NotFoundResponse | InternalServerErrorResponse>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFavoriteById>>, TError, TData>>, request?: SecondParameter<typeof orvalHttpClient>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Gets favorite recipe detail for authenticated user
+ */
+
+export function useGetFavoriteById<TData = Awaited<ReturnType<typeof getFavoriteById>>, TError = ErrorType<UnauthorizedResponse | NotFoundResponse | InternalServerErrorResponse>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFavoriteById>>, TError, TData>>, request?: SecondParameter<typeof orvalHttpClient>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetFavoriteByIdQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
