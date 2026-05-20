@@ -4,7 +4,7 @@ info:
   version: 0.1.0
   description: Minimal authenticated API contract for Cognito + API Gateway + Lambda.
 servers:
-  - url: https://iaerxz52fj.execute-api.eu-south-2.amazonaws.com
+  - url: https://jfd1wc60og.execute-api.eu-south-2.amazonaws.com
 security:
   - bearerAuth: []
 paths:

@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# infra
+infra/node_modules/
+infra/cdk.out/
+.generated/
+infra/users.json

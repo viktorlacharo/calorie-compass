@@ -1,0 +1,35 @@
+import type { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
+import { QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { docClient } from '../shared/db';
+import { toApiFood, type StoredFood } from '../shared/foods';
+import { getUserSub, json } from '../shared/http';
+
+export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event) => {
+  try {
+    const sub = getUserSub(event);
+    if (!sub) {
+      return json(401, { message: 'Unauthorized' });
+    }
+
+    const tableName = process.env.TABLE_NAME;
+    if (!tableName) {
+      return json(500, { message: 'Missing TABLE_NAME environment variable' });
+    }
+
+    const result = await docClient.send(
+      new QueryCommand({
+        TableName: tableName,
+        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :skPrefix)',
+        ExpressionAttributeValues: {
+          ':pk': `USER#${sub}`,
+          ':skPrefix': 'FOOD#',
+        },
+      }),
+    );
+
+    return json(200, { items: (result.Items ?? []).map((item: unknown) => toApiFood(item as StoredFood)) });
+  } catch (error) {
+    console.error('foods-list error', error);
+    return json(500, { message: 'Internal Server Error' });
+  }
+};
