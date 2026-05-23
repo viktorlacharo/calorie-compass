@@ -286,7 +286,7 @@ export default function ScanLabelScreen() {
             <View className="absolute inset-0">
               {state === 'camera' && permission?.granted ? (
                 <CameraView
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                   facing="back"
                   barcodeScannerSettings={{
                     barcodeTypes: ['ean13', 'ean8', 'upc_a'],
