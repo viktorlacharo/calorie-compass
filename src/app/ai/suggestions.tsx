@@ -192,7 +192,7 @@ export default function MealSuggestionsScreen() {
               {isSuggestionsLoading ? (
                 <ActivityIndicator size="small" color="#60A5FA" />
               ) : (
-                <Image source={geminiLogo} className="h-8 w-8" resizeMode="contain" />
+                <Image source={geminiLogo} className="h-8 w-8" style={{ width: 32, height: 32 }} resizeMode="contain" />
               )}
             </View>
           </View>
@@ -285,7 +285,7 @@ export default function MealSuggestionsScreen() {
                   </View>
 
                   <View className="h-12 w-12 items-center justify-center rounded-full bg-white/10">
-                    <Image source={geminiLogo} className="h-7 w-7" resizeMode="contain" />
+                    <Image source={geminiLogo} className="h-7 w-7" style={{ width: 28, height: 28 }} resizeMode="contain" />
                   </View>
                 </View>
               </View>

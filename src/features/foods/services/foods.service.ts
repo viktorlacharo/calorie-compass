@@ -1,5 +1,6 @@
 import {
   createFood as createFoodAws,
+  deleteFood as deleteFoodAws,
   getFoodByBarcode as getFoodByBarcodeAws,
   getFoods as getFoodsAws,
   updateFood as updateFoodAws,
@@ -86,8 +87,8 @@ export async function updateFood(id: string, input: UpdateFoodInput): Promise<Fo
 }
 
 export async function removeFood(id: string): Promise<DeleteFoodResult> {
-  void id;
-  throw new Error('Eliminar alimentos en AWS aun no esta disponible.');
+  const response = await deleteFoodAws(id);
+  return response as DeleteFoodResult;
 }
 
 export async function lookupFoodByBarcode(barcode: string): Promise<BarcodeLookupResult> {

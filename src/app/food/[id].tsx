@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, Alert, Image } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, Image, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, PencilLine, Trash2 } from 'lucide-react-native';
@@ -68,17 +68,66 @@ export default function FoodDetailScreen() {
     day: 'numeric',
   }).format(new Date(currentFood.createdAt));
 
-  async function handleDelete() {
-    const result = await deleteFoodMutation.mutateAsync(currentFood.id);
+  function handleDelete() {
+    console.log('[handleDelete] Clicked trash icon for food:', currentFood.id, currentFood.name);
 
-    if (result.status === 'blocked') {
-      Alert.alert('No se puede borrar', `Este alimento sigue usado en ${result.recipeCount} recetas.`);
-      return;
+    const performDelete = async () => {
+      try {
+        console.log('[handleDelete] Initiating delete mutation...');
+        const result = await deleteFoodMutation.mutateAsync(currentFood.id);
+        console.log('[handleDelete] Mutation result:', result);
+
+        if (result.status === 'blocked') {
+          const recipeNames = result.recipes?.map((r) => r.name).join('\n- ') || '';
+          const msg = `Este alimento está en uso en las siguientes recetas:\n\n- ${recipeNames || `${result.recipeCount} recetas`}`;
+          
+          if (Platform.OS === 'web') {
+            alert(`No se puede borrar: ${msg}`);
+          } else {
+            Alert.alert('No se puede borrar', msg);
+          }
+          console.warn('[handleDelete] Delete blocked:', msg);
+          return;
+        }
+
+        const msgSuccess = `"${currentFood.name}" se ha eliminado correctamente.`;
+        if (Platform.OS === 'web') {
+          alert(msgSuccess);
+          router.replace('/(tabs)/foods');
+        } else {
+          Alert.alert('Alimento eliminado', msgSuccess, [
+            { text: 'Vale', onPress: () => router.replace('/(tabs)/foods') },
+          ]);
+        }
+      } catch (error) {
+        console.error('[handleDelete] Error during deletion:', error);
+        if (Platform.OS === 'web') {
+          alert('Error: No se ha podido eliminar el alimento.');
+        } else {
+          Alert.alert('Error', 'No se ha podido eliminar el alimento.');
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmDelete = window.confirm(`¿Seguro que quieres eliminar "${currentFood.name}"? Esta acción no se puede deshacer.`);
+      if (confirmDelete) {
+        performDelete();
+      }
+    } else {
+      Alert.alert(
+        '¿Eliminar alimento?',
+        `¿Seguro que quieres eliminar "${currentFood.name}"? Esta acción no se puede deshacer.`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Eliminar',
+            style: 'destructive',
+            onPress: performDelete,
+          },
+        ]
+      );
     }
-
-    Alert.alert('Alimento eliminado', `"${currentFood.name}" se ha eliminado correctamente.`, [
-      { text: 'Vale', onPress: () => router.replace('/(tabs)/foods') },
-    ]);
   }
 
   return (
@@ -124,7 +173,7 @@ export default function FoodDetailScreen() {
             {supermarket ? (
               <View className="flex-row items-center gap-2 rounded-full border border-border bg-forest-panelAlt px-3 py-1.5">
                 <View className="h-5 w-5 items-center justify-center rounded-full bg-white/90">
-                  <Image source={supermarket.logo} className="h-3.5 w-3.5" resizeMode="contain" />
+                  <Image source={supermarket.logo} className="h-3.5 w-3.5" style={{ width: 14, height: 14 }} resizeMode="contain" />
                 </View>
                 <Text className="font-sans text-[10px] uppercase tracking-[1.1px] text-secondary">
                   {supermarket.label}

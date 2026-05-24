@@ -18,7 +18,7 @@ export type FoodsListFilters = {
 
 export type DeleteFoodResult =
   | { status: 'deleted' }
-  | { status: 'blocked'; recipeCount: number };
+  | { status: 'blocked'; recipeCount: number; recipes?: Array<{ id: string; name: string }> };
 
 export type FoodsRepository = {
   list: (filters?: FoodsListFilters) => Promise<Food[]>;

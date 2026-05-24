@@ -40,7 +40,7 @@ export function AssistantMessage({
             {visual === 'loading' ? (
               <ActivityIndicator size="small" color="#60A5FA" />
             ) : (
-              <Image source={geminiLogo} className="h-7 w-7" resizeMode="contain" />
+              <Image source={geminiLogo} className="h-7 w-7" style={{ width: 28, height: 28 }} resizeMode="contain" />
             )}
           </View>
           <Badge variant={tone === 'brand' ? 'secondary' : 'secondary'}>

@@ -227,7 +227,7 @@ export const FoodForm = withForm({
                       >
                         <View className="items-center gap-2">
                           <View className="h-12 w-12 items-center justify-center rounded-full bg-white/90">
-                            <Image source={store.logo} className="h-7 w-7" resizeMode="contain" />
+                            <Image source={store.logo} className="h-7 w-7" style={{ width: 28, height: 28 }} resizeMode="contain" />
                           </View>
                           <Text className="font-sans text-[11px] uppercase tracking-[1.1px] text-secondary">{store.label}</Text>
                         </View>

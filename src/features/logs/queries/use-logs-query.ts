@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createMealLogEntry, getCalendarMonth, getDashboardSummary, getTimelineAnalytics, listTodayMealLogEntries } from '@/features/logs/services/logs.mock-backend';
+import {
+  createMealLogEntry,
+  getCalendarMonth,
+  getDashboardSummary,
+  getTimelineAnalytics,
+  listTodayMealLogEntries,
+} from '@/features/logs/services/logs.service';
 import { logsQueryKeys } from '@/features/logs/queries/logs.query-keys';
 import type { MealLogEntry } from '@/types/nutrition';
 

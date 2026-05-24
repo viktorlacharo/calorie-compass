@@ -58,7 +58,7 @@ export function FoodListItem({ food, className }: FoodListItemProps) {
               <>
                 <View className="h-1 w-1 rounded-full bg-muted" />
                 <View className="flex-row items-center gap-2">
-                  <Image source={supermarket.logo} className="h-4 w-4 rounded-full" resizeMode="contain" />
+                  <Image source={supermarket.logo} className="h-4 w-4 rounded-full" style={{ width: 16, height: 16 }} resizeMode="contain" />
                   <Text className="font-sans text-[10px] uppercase tracking-[1.2px] text-secondary">
                     {supermarket.label}
                   </Text>

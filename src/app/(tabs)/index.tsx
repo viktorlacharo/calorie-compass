@@ -191,7 +191,7 @@ export default function DailyLogScreen() {
                     <View className="flex-row items-center justify-between gap-4">
                       <View className="flex-1 flex-row items-center gap-3">
                         <View className="h-12 w-12 items-center justify-center rounded-full bg-white/90">
-                          <Image source={geminiLogo} className="h-7 w-7" resizeMode="contain" />
+                          <Image source={geminiLogo} className="h-7 w-7" style={{ width: 28, height: 28 }} resizeMode="contain" />
                         </View>
                         <View className="flex-1">
                           <Text className="font-sans-bold text-base text-primary">¿Qué como hoy?</Text>

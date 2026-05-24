@@ -112,6 +112,28 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
+    delete:
+      operationId: deleteFood
+      summary: Deletes a food if not used by recipes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Food deletion result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteFoodResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /foods/barcode/{barcode}:
     get:
       operationId: getFoodByBarcode
@@ -252,6 +274,240 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /logs:
+    get:
+      operationId: getLogs
+      summary: Lists meal log entries for a date range for authenticated user
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: User meal log entries
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MealLogEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      operationId: createLog
+      summary: Creates a meal log entry for authenticated user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMealLogRequest'
+      responses:
+        '201':
+          description: Meal log created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - item
+                properties:
+                  item:
+                    $ref: '#/components/schemas/MealLogEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /logs/dashboard:
+    get:
+      operationId: getDashboard
+      summary: Returns today's dashboard summary for authenticated user
+      responses:
+        '200':
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /uploads/presign:
+    post:
+      operationId: getUploadPresignUrl
+      summary: Generates a presigned S3 upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fileName
+                - contentType
+                - pathPrefix
+              properties:
+                fileName:
+                  type: string
+                contentType:
+                  type: string
+                pathPrefix:
+                  type: string
+                  enum:
+                    - meals
+                    - labels
+      responses:
+        '200':
+          description: Presigned S3 upload URL details
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - uploadUrl
+                  - key
+                properties:
+                  uploadUrl:
+                    type: string
+                  key:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ai/suggestions:
+    post:
+      operationId: getAiSuggestions
+      summary: Gets food suggestions based on user context
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiSuggestionRequest'
+      responses:
+        '200':
+          description: Suggestions response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiSuggestionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ai/recipe-drafts:
+    post:
+      operationId: createAiRecipeDraft
+      summary: Creates an AI recipe draft from a suggestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRecipeDraftRequest'
+      responses:
+        '200':
+          description: Generated recipe draft details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateRecipeDraftResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ai/scan-label:
+    post:
+      operationId: scanNutritionLabel
+      summary: Scans a nutrition label using Gemini
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - imageKey
+              properties:
+                imageKey:
+                  type: string
+      responses:
+        '200':
+          description: Scanned label results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanNutritionLabelResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ai/analyze-meal:
+    post:
+      operationId: analyzeMealImage
+      summary: Analyzes a meal image using Gemini and crosses it with user catalog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - imageKey
+              properties:
+                imageKey:
+                  type: string
+                foodsCatalog:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Food'
+      responses:
+        '200':
+          description: Analyzed meal results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeMealImageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 components:
   securitySchemes:
@@ -377,6 +633,78 @@ components:
         quantity:
           type: number
           minimum: 0.1
+
+    MealLogSource:
+      type: string
+      enum:
+        - manual
+        - favorite
+        - visual-analysis
+
+    MealLogEntry:
+      type: object
+      required:
+        - id
+        - userId
+        - consumedAt
+        - source
+        - total
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        consumedAt:
+          type: string
+          format: date-time
+        source:
+          $ref: '#/components/schemas/MealLogSource'
+        total:
+          $ref: '#/components/schemas/MacroNutrients'
+        favoriteDishId:
+          type: string
+        notes:
+          type: string
+
+    CreateMealLogRequest:
+      type: object
+      required:
+        - source
+        - total
+      properties:
+        source:
+          $ref: '#/components/schemas/MealLogSource'
+        total:
+          $ref: '#/components/schemas/MacroNutrients'
+        favoriteDishId:
+          type: string
+        notes:
+          type: string
+        consumedAt:
+          type: string
+          format: date-time
+
+    DashboardSummary:
+      type: object
+      required:
+        - entries
+        - totals
+        - budget
+        - remainingCalories
+        - remainingProtein
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/MealLogEntry'
+        totals:
+          $ref: '#/components/schemas/MacroNutrients'
+        budget:
+          type: number
+        remainingCalories:
+          type: number
+        remainingProtein:
+          type: number
 
     FavoriteDish:
       type: object
@@ -682,3 +1010,333 @@ components:
         tokenUse:
           type: string
           nullable: true
+
+    DeleteFoodResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - deleted
+            - blocked
+        recipeCount:
+          type: number
+        recipes:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - name
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+
+    AiSuggestionRequest:
+      type: object
+      required:
+        - mode
+        - nutritionScore
+        - todayMeals
+        - todayTotals
+        - dailyCalorieTarget
+        - dailyMacroTarget
+        - remainingCalories
+        - remainingMacros
+        - foodsCatalog
+        - favoriteDishes
+      properties:
+        mode:
+          type: string
+          enum:
+            - craving
+            - recommended
+            - alternate
+        focus:
+          type: string
+          enum:
+            - quick
+            - protein
+            - snack
+            - light-dinner
+            - dessert-fit
+          nullable: true
+        nutritionScore:
+          type: number
+        todayMeals:
+          type: array
+          items:
+            $ref: '#/components/schemas/MealLogEntry'
+        todayTotals:
+          $ref: '#/components/schemas/MacroNutrients'
+        dailyCalorieTarget:
+          type: number
+        dailyMacroTarget:
+          $ref: '#/components/schemas/MacroNutrients'
+        remainingCalories:
+          type: number
+        remainingMacros:
+          $ref: '#/components/schemas/MacroNutrients'
+        foodsCatalog:
+          type: array
+          items:
+            $ref: '#/components/schemas/Food'
+        favoriteDishes:
+          type: array
+          items:
+            $ref: '#/components/schemas/FavoriteDish'
+        requestId:
+          type: string
+          nullable: true
+
+    AiSuggestion:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - whyItFits
+        - estimatedCalories
+        - estimatedMacros
+        - items
+        - foodNames
+        - sourceKind
+        - sourceLabel
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        whyItFits:
+          type: string
+        estimatedCalories:
+          type: number
+        estimatedMacros:
+          $ref: '#/components/schemas/MacroNutrients'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FavoriteDishItem'
+        foodNames:
+          type: array
+          items:
+            type: string
+        sourceKind:
+          type: string
+          enum:
+            - foods-only
+            - favorite-adaptation
+        sourceLabel:
+          type: string
+        basedOnFavoriteId:
+          type: string
+          nullable: true
+
+    AiSuggestionResponse:
+      type: object
+      required:
+        - assistantIntro
+        - assistantFollowUp
+        - suggestions
+        - provider
+        - generatedAt
+      properties:
+        assistantIntro:
+          type: string
+        assistantFollowUp:
+          type: string
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiSuggestion'
+        provider:
+          type: string
+          enum:
+            - mock
+            - lambda
+        generatedAt:
+          type: string
+          format: date-time
+
+    CreateRecipeDraftRequest:
+      type: object
+      required:
+        - suggestionId
+        - mode
+        - modeLabel
+        - foodsCatalog
+        - sourceResponse
+      properties:
+        suggestionId:
+          type: string
+        mode:
+          type: string
+          enum:
+            - craving
+            - recommended
+            - alternate
+        focus:
+          type: string
+          enum:
+            - quick
+            - protein
+            - snack
+            - light-dinner
+            - dessert-fit
+          nullable: true
+        modeLabel:
+          type: string
+        foodsCatalog:
+          type: array
+          items:
+            $ref: '#/components/schemas/Food'
+        sourceResponse:
+          $ref: '#/components/schemas/AiSuggestionResponse'
+
+    AiRecipeDraft:
+      type: object
+      required:
+        - draftId
+        - suggestionId
+        - title
+        - description
+        - whyItFits
+        - items
+        - estimatedMacros
+        - estimatedCalories
+        - modeLabel
+        - sourceLabel
+        - tags
+        - steps
+      properties:
+        draftId:
+          type: string
+        suggestionId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        whyItFits:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FavoriteDishItem'
+        estimatedMacros:
+          $ref: '#/components/schemas/MacroNutrients'
+        estimatedCalories:
+          type: number
+        modeLabel:
+          type: string
+        sourceLabel:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        steps:
+          type: array
+          items:
+            type: string
+
+    CreateRecipeDraftResponse:
+      allOf:
+        - $ref: '#/components/schemas/AiRecipeDraft'
+        - type: object
+          required:
+            - provider
+          properties:
+            provider:
+              type: string
+              enum:
+                - mock
+                - lambda
+
+    NutritionLabelScanResult:
+      type: object
+      required:
+        - detectedName
+        - referenceAmount
+        - referenceMacros
+        - confidence
+      properties:
+        detectedName:
+          type: string
+        referenceAmount:
+          type: number
+        referenceMacros:
+          $ref: '#/components/schemas/MacroNutrients'
+        defaultServingAmount:
+          type: number
+          nullable: true
+        confidence:
+          type: number
+
+    ScanNutritionLabelResponse:
+      allOf:
+        - $ref: '#/components/schemas/NutritionLabelScanResult'
+        - type: object
+          required:
+            - provider
+          properties:
+            provider:
+              type: string
+              enum:
+                - mock
+                - lambda
+
+    VisualAnalysisItem:
+      type: object
+      required:
+        - detectedFoodName
+        - estimatedQuantity
+        - estimatedMacros
+        - confidence
+      properties:
+        detectedFoodName:
+          type: string
+        estimatedQuantity:
+          type: number
+        matchedFoodId:
+          type: string
+          nullable: true
+        estimatedMacros:
+          $ref: '#/components/schemas/MacroNutrients'
+        confidence:
+          type: number
+
+    VisualAnalysisResult:
+      type: object
+      required:
+        - imageId
+        - items
+        - total
+      properties:
+        imageId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisualAnalysisItem'
+        total:
+          $ref: '#/components/schemas/MacroNutrients'
+
+    AnalyzeMealImageResponse:
+      allOf:
+        - $ref: '#/components/schemas/VisualAnalysisResult'
+        - type: object
+          required:
+            - provider
+          properties:
+            provider:
+              type: string
+              enum:
+                - mock
+                - lambda
